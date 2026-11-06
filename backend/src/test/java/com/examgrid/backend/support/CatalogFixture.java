@@ -1,5 +1,7 @@
 package com.examgrid.backend.support;
 
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.nio.file.Files;
@@ -20,7 +22,11 @@ public final class CatalogFixture {
     private CatalogFixture() {
     }
 
-    public static void reset(JdbcTemplate jdbc) {
+    public static void reset(JdbcTemplate jdbc, StringRedisTemplate redis) {
+        redis.execute((RedisCallback<Object>) connection -> {
+            connection.serverCommands().flushDb();
+            return null;
+        });
         jdbc.execute("truncate table approval, invigilation, seat_assignment, exam_assignment, schedule_run, "
                 + "faculty_unavailability, faculty_course, faculty, course_lock, same_slot_group_member, "
                 + "same_slot_group, enrolment, student, course, room, exam_slot, import_batch restart identity cascade");

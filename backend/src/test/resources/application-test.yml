@@ -7,3 +7,10 @@ examgrid:
     password: admin-test-password
   storage:
     root: target/test-storage
+  rate-limit:
+    public-per-minute: 25
+    login-per-minute: 100000
+spring:
+  data:
+    redis:
+      url: ${EXAMGRID_TEST_REDIS_URL:redis://localhost:6379}

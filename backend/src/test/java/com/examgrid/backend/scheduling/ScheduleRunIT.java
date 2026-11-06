@@ -36,6 +36,9 @@ class ScheduleRunIT {
     @Autowired
     JdbcTemplate jdbc;
 
+    @Autowired
+    org.springframework.data.redis.core.StringRedisTemplate redis;
+
     ApiClient api;
     String admin;
 
@@ -43,7 +46,7 @@ class ScheduleRunIT {
     void setUp() throws Exception {
         api = new ApiClient(mvc, mapper);
         admin = api.adminToken();
-        CatalogFixture.reset(jdbc);
+        CatalogFixture.reset(jdbc, redis);
     }
 
     @Test

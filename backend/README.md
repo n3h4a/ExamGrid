@@ -38,6 +38,10 @@ curl -s localhost:8080/api/auth/me -H "Authorization: Bearer $TOKEN"
 | `EXAMGRID_STORAGE_ROOT` | `./data/storage` | Where uploaded files and PDFs are stored |
 | `EXAMGRID_ROLL_PATTERN` | `[0-9]{2}[A-Z]{2,4}[0-9]{3}` | Roll number format enforced by imports |
 | `EXAMGRID_DEMO_ENABLED` | `false` (`true` in `dev`) | Seed the synthetic demo university into an empty database |
+| `EXAMGRID_REDIS_URL` | `redis://localhost:6379` | Seat index and rate-limit counters |
+| `EXAMGRID_REQUIRED_APPROVALS` | `2` | Distinct approvals needed to publish |
+| `EXAMGRID_INSTITUTION_NAME` | `ExamGrid Demo University` | Printed on PDFs |
+| `EXAMGRID_RATE_LIMIT_PUBLIC` / `_LOGIN` | `60` / `10` | Requests per IP per minute |
 | `EXAMGRID_SCHEDULING_WORKER_THREADS` | `2` | Solves that may run concurrently |
 | `EXAMGRID_SCHEDULING_MAX_ACTIVE_RUNS` | `10` | Queued + running runs before `429` |
 | `SPRING_PROFILES_ACTIVE` | none | `dev` locally, `prod` for JSON (ECS) logs |
@@ -55,6 +59,9 @@ com.examgrid.backend
 ├── imports     CSV/XLSX upload → validate → report → all-or-nothing commit
 ├── storage     FileStorage abstraction, local-disk implementation
 ├── scheduling  runs as jobs: snapshot loader, worker pool, SSE progress, plan storage and views
+├── publishing  two-person approval, publication job, PDFs, Redis seat index, disruptions
+├── portal      student / faculty "me" endpoints and the public seat finder
+├── ratelimit   Redis fixed-window limiter for public endpoints and login
 ├── search      trigram search across students, courses, faculty, rooms
 ├── demo        synthetic demo university seeder
 ├── audit       append-only audit log + search API
@@ -73,6 +80,9 @@ com.examgrid.backend
 | Imports | `POST /api/imports/{kind}?dryRun&mode`, `GET /api/imports`, `GET /api/imports/{id}[/file]`, `GET /api/imports/templates/{kind}` |
 | Search | `GET /api/search?q=` |
 | Schedule runs | `POST /api/schedule-runs` (202), `GET /api/schedule-runs[/{id}]`, `GET …/{id}/events` (SSE), `POST …/{id}/cancel`, `DELETE …/{id}` |
+| Publishing | `POST …/{id}/approvals`, `DELETE …/{id}/approvals/me`, `POST …/{id}/publish` (retry), `GET …/{id}/documents[/{docId}]`, `POST …/{id}/disruptions` |
+| Portals | `GET /api/students/me/exams`, `GET /api/students/me/hall-ticket`, `GET /api/faculty/me/duties` |
+| Public | `GET /api/public/seat?roll=`, `GET /api/public/status` (rate-limited, no login) |
 | Plan views | `GET …/{id}/timetable`, `…/{id}/rooms?slot=`, `…/{id}/invigilation`, `…/{id}/students/{roll}`, `GET /api/schedule-runs/compare?ids=` |
 | Audit | `GET /api/audit` |
 
@@ -106,5 +116,6 @@ See [ADR-0007](../docs/adr/0007-async-runs-and-sse.md) for the job model.
 mvn -pl backend verify    # unit tests (surefire) + *IT integration tests (failsafe, Testcontainers)
 ```
 
-Integration tests start one shared `postgres:16-alpine` container and run the full application
-against it, so Docker must be available.
+Integration tests start shared `postgres:16-alpine` and `redis:7-alpine` containers and run the
+full application against them, so Docker must be available. To use an existing Redis instead
+(for example where image pulls are rate-limited), set `EXAMGRID_TEST_REDIS_URL=redis://localhost:6379`.

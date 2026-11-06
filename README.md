@@ -17,6 +17,7 @@ course; ExamGrid works out **when** every exam happens, **where** every student 
 | [`docs/spec`](docs/spec/PROJECT_SPEC.md) | Product and algorithm specification |
 | [`docs/benchmarks`](docs/benchmarks/README.md) | Measured solver performance |
 | [`docs/imports.md`](docs/imports.md) | CSV/Excel import formats and rules |
+| [`docs/security.md`](docs/security.md) | Threats and controls |
 | [`docs/adr`](docs/adr) | Architecture decision records |
 
 ## Try the solver
@@ -44,6 +45,15 @@ the catalog in the background while the browser watches **Server-Sent Events**
 (`phase`, `pct`, `score`). The stored plan can be browsed as a timetable, room seating charts,
 invigilation duties or per-student schedules, compared with other runs, and is flagged
 stale if the data changes afterwards ([ADR-0007](docs/adr/0007-async-runs-and-sse.md)).
+
+## Publishing and result day
+
+Two **different** exam-cell members must approve a plan. The publication job then renders
+every hall ticket, seating chart, the timetable and the invigilation roster as PDFs, and
+pre-computes `roll → {course, slot, room, seat}` into **Redis**. On result day a seat lookup
+is one Redis `GET` (with a Postgres fallback), the public finder is rate-limited per IP and
+never shows names, and students download their own hall ticket with identity taken from the
+JWT only ([ADR-0008](docs/adr/0008-publishing-and-result-day.md), [security model](docs/security.md)).
 
 ## Algorithms
 

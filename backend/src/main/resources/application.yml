@@ -18,6 +18,10 @@ spring:
         order_inserts: true
   flyway:
     enabled: true
+  data:
+    redis:
+      url: ${EXAMGRID_REDIS_URL:redis://localhost:6379}
+      timeout: 2s
   servlet:
     multipart:
       max-file-size: 20MB
@@ -46,6 +50,13 @@ examgrid:
     root: ${EXAMGRID_STORAGE_ROOT:./data/storage}
   imports:
     roll-pattern: ${EXAMGRID_ROLL_PATTERN:}
+  publishing:
+    required-approvals: ${EXAMGRID_REQUIRED_APPROVALS:2}
+    institution-name: ${EXAMGRID_INSTITUTION_NAME:ExamGrid Demo University}
+  rate-limit:
+    enabled: ${EXAMGRID_RATE_LIMIT_ENABLED:true}
+    public-per-minute: ${EXAMGRID_RATE_LIMIT_PUBLIC:60}
+    login-per-minute: ${EXAMGRID_RATE_LIMIT_LOGIN:10}
   scheduling:
     worker-threads: ${EXAMGRID_SCHEDULING_WORKER_THREADS:2}
     max-active-runs: ${EXAMGRID_SCHEDULING_MAX_ACTIVE_RUNS:10}
@@ -60,6 +71,10 @@ management:
       probes:
         enabled: true
       show-details: when-authorized
+      # Redis is a cache with a Postgres fallback, so it must not take the API out of rotation.
+      group:
+        readiness:
+          include: readinessState,db
   info:
     env:
       enabled: true
