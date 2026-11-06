@@ -67,6 +67,105 @@ and DTOs:
 | `ratelimit`, `common` | Redis fixed-window limiter, Redis circuit breaker, problem responses, request ids |
 | `audit` | append-only audit log written in the same transaction as the change |
 
+### Backend layers
+
+Every feature package follows the same shape. Cross-cutting concerns live in servlet
+filters and one exception handler, never in controllers.
+
+```mermaid
+flowchart TB
+    subgraph F["Servlet filters (in order, on every request)"]
+        direction LR
+        RID["RequestIdFilter<br/>X-Request-Id → MDC + response"] --> RL["RateLimitFilter<br/>/api/public/** and login<br/>Redis fixed window"] --> SEC["Spring Security<br/>JWT decode → roles<br/>401 / 403 as problems"]
+    end
+    SEC --> C["Controller<br/>@PreAuthorize role check<br/>@Valid request DTOs"]
+    C --> SV["Service<br/>@Transactional business rules<br/>audit entry in the same transaction"]
+    SV --> DB[("JPA repositories for aggregates<br/>JdbcTemplate for batch SQL")]
+    SV --> AS["Async work<br/>run worker pool · publication job"]
+    AS --> SOL["examgrid-solver"]
+    C -. "any exception" .-> EH["ApiExceptionHandler<br/>RFC 9457 problem + code + requestId"]
+```
+
+JPA handles aggregates that are edited one at a time, such as users, runs and catalog rows.
+Plain JDBC handles bulk work, where an ORM would get in the way: batch upserts during
+imports, writing tens of thousands of seat assignments, and the plan read models.
+
+## Request lifecycle
+
+An authenticated call, for example starting a run, passes through these layers:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant C as Caddy
+    participant N as Nginx
+    participant F as Filters
+    participant S as Spring Security
+    participant API as Controller → Service
+    participant PG as Postgres
+
+    B->>C: POST /api/schedule-runs (HTTPS, Bearer token)
+    C->>N: proxy, sets X-Forwarded-For to the client IP
+    N->>F: proxy /api/*, adds X-Request-Id if absent
+    F->>F: request id into MDC (every log line carries it)
+    F->>S: rate limit applies only to /api/public/** and login
+    S->>S: verify HS256 signature, issuer and expiry, map role
+    S->>API: authenticated principal
+    API->>API: @PreAuthorize("hasRole('EXAM_CELL')"), validate body
+    API->>PG: insert run (QUEUED) + audit entry, one transaction
+    API-->>B: 202 Accepted, Location, X-Request-Id
+    Note over API,PG: a worker claims the run with a conditional UPDATE<br/>and streams progress on GET /events (SSE)
+```
+
+When anything fails, `ApiExceptionHandler` turns the exception into a problem document with a
+stable `code` and the same `requestId` that appears in the logs and the audit trail. Stack
+traces and SQL never reach the client.
+
+## Authentication flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant UI as React app
+    participant A as AuthService
+    participant T as TokenService
+    participant P as Protected endpoint
+
+    U->>UI: username + password
+    UI->>A: POST /api/auth/login (rate limited: 10/min per IP)
+    A->>A: look up user, and if unknown compare against a dummy hash<br/>so timing does not reveal which usernames exist
+    alt wrong password, unknown user or disabled account
+        A-->>UI: 401 invalid_credentials (same body for all three), audited
+    else valid
+        A->>T: issue HS256 token: sub, uid, role, roll or faculty code
+        A-->>UI: accessToken, expiresAt, user
+        UI->>UI: store the session in sessionStorage<br/>schedule sign-out at expiry
+    end
+    UI->>P: Authorization: Bearer token
+    P->>P: role check, and portal endpoints read the roll or faculty code<br/>from the token only, never from the URL
+    P-->>UI: 200, or 401, which signs the UI out
+```
+
+Tokens are stateless, so any API instance can verify them without a session store. The
+token lives in `sessionStorage` and is sent only as a header: it survives a reload, dies with
+the tab, and with no cookies there is no CSRF surface. See [security](security.md).
+
+## Frontend
+
+```mermaid
+flowchart LR
+    R["React Router<br/>/admin/*, /me, /duties, /seat, /login"] --> G["RequireRole<br/>role-aware guard"] --> L["Layout<br/>role-specific navigation"] --> P["Feature pages<br/>features/*"]
+    P --> Q["TanStack Query<br/>cache + invalidation"] --> CL["api/client.ts<br/>bearer token · problem parsing<br/>401 → sign out"] --> API["/api"]
+    P --> E["useRunEvents<br/>lib/sse.ts parses the<br/>authenticated fetch stream"] --> API
+```
+
+The app has no global store. Server state lives in TanStack Query, and mutations invalidate
+the queries they affect. Every screen is a folder under `features/`. Shared UI primitives sit
+in `components/ui.tsx`, and pure logic (seat-label maths, formatting, the SSE parser) sits in
+`lib/` with unit tests. The [frontend README](../frontend/README.md) covers the design choices.
+
 ## Solver pipeline
 
 ```mermaid
@@ -150,70 +249,43 @@ Two people must approve, and the same person cannot approve twice. An approval i
 if the catalog has changed since the run was solved, because the plan would describe
 students who no longer match the data. See [ADR-0008](adr/0008-publishing-and-result-day.md).
 
-## Data model
+## Deployment
 
 ```mermaid
-erDiagram
-    COURSE ||--o{ ENROLMENT : has
-    STUDENT ||--o{ ENROLMENT : takes
-    IMPORT_BATCH |o--o{ ENROLMENT : "loaded by"
-    FACULTY ||--o{ FACULTY_COURSE : teaches
-    COURSE ||--o{ FACULTY_COURSE : "taught by"
-    FACULTY ||--o{ FACULTY_UNAVAILABILITY : "away in"
-    EXAM_SLOT ||--o{ FACULTY_UNAVAILABILITY : ""
-    COURSE ||--o| COURSE_LOCK : "pinned by"
-    EXAM_SLOT ||--o{ COURSE_LOCK : ""
-    SAME_SLOT_GROUP ||--|{ SAME_SLOT_GROUP_MEMBER : contains
-    COURSE ||--o| SAME_SLOT_GROUP_MEMBER : ""
+flowchart LR
+    subgraph CI["GitHub Actions (every push)"]
+        T1["Maven verify<br/>unit, property, Testcontainers"] --> IMG["Build images<br/>push to GHCR on main"]
+        T2["Frontend lint, typecheck,<br/>tests, build"] --> IMG
+    end
+    IMG --> GHCR[("ghcr.io/n3h4a/<br/>examgrid-api · examgrid-web")]
 
-    SCHEDULE_RUN |o--o{ SCHEDULE_RUN : "derived from"
-    SCHEDULE_RUN ||--o{ EXAM_ASSIGNMENT : ""
-    SCHEDULE_RUN ||--o{ SEAT_ASSIGNMENT : ""
-    SCHEDULE_RUN ||--o{ INVIGILATION : ""
-    SCHEDULE_RUN ||--o{ APPROVAL : ""
-    SCHEDULE_RUN ||--o{ PUBLISHED_DOCUMENT : ""
-    APP_USER ||--o{ APPROVAL : gives
+    subgraph VM["Option A: one VM (deploy/docker-compose.prod.yml)"]
+        CAD["Caddy :80/:443<br/>automatic TLS, HSTS"] --> WEB["examgrid-web<br/>Nginx + SPA"] --> APIC["examgrid-api"]
+        APIC --> PGV[("postgres<br/>volume")]
+        APIC --> RDV[("redis")]
+        APIC --> FSV[["/data volume<br/>uploads, PDFs"]]
+        BK["backup.sh<br/>pg_dump + storage, 14 days"] -.-> PGV
+    end
 
-    COURSE ||--o{ EXAM_ASSIGNMENT : ""
-    EXAM_SLOT ||--o{ EXAM_ASSIGNMENT : ""
-    STUDENT ||--o{ SEAT_ASSIGNMENT : ""
-    ROOM ||--o{ SEAT_ASSIGNMENT : ""
-    FACULTY ||--o{ INVIGILATION : ""
-    ROOM ||--o{ INVIGILATION : ""
+    subgraph RENDER["Option B: Render blueprint (render.yaml)"]
+        RW["examgrid-web"] --> RA["examgrid-api"] --> RP[("Render Postgres")]
+        RA --> RK[("Render Key Value")]
+    end
 
-    SCHEDULE_RUN {
-        bigint id PK
-        varchar status
-        jsonb params
-        jsonb input_summary "counts + data fingerprint"
-        jsonb metrics
-        jsonb infeasibility
-        jsonb disruption
-        bigint parent_run_id FK
-    }
-    SEAT_ASSIGNMENT {
-        bigint run_id FK
-        bigint student_id FK
-        bigint course_id FK
-        bigint slot_id FK
-        bigint room_id FK
-        int seat_row
-        int seat_col
-    }
-    ROOM {
-        varchar code UK
-        int seat_rows
-        int seat_columns
-        jsonb blocked_seats
-        int capacity
-        int priority "fill order for min-cost flow"
-    }
+    GHCR --> VM
+    GHCR -.-> RENDER
 ```
 
-`audit_log` and `app_user` stand apart from the diagram. Every plan table hangs off
-`schedule_run` with `on delete cascade`. Catalog rows referenced by a saved plan are
-protected with `on delete restrict`, so an old plan is never silently changed. The schema is
-in [`backend/src/main/resources/db/migration/`](../backend/src/main/resources/db/migration/).
+Only the edge proxy publishes ports. Postgres, Redis and the API sit on a private network.
+Flyway migrates the schema on start-up, and readiness waits for the database. Upgrading means
+pulling new images and recreating the containers. The [deployment guide](deployment.md) covers
+both options from scratch.
+
+## Data model
+
+The tables, their constraints, the indexing strategy, the Redis keyspace and the file-storage
+layout are documented in [**Data model**](database.md), with a full entity-relationship
+diagram.
 
 ## Cross-cutting concerns
 
