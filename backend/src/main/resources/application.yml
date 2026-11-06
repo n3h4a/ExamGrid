@@ -46,6 +46,9 @@ examgrid:
     root: ${EXAMGRID_STORAGE_ROOT:./data/storage}
   imports:
     roll-pattern: ${EXAMGRID_ROLL_PATTERN:}
+  scheduling:
+    worker-threads: ${EXAMGRID_SCHEDULING_WORKER_THREADS:2}
+    max-active-runs: ${EXAMGRID_SCHEDULING_MAX_ACTIVE_RUNS:10}
 
 management:
   endpoints:

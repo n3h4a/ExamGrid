@@ -10,7 +10,7 @@ its tests green. Status is updated as milestones land.
 | 3 | Solver allocation: rooms (min-cost max-flow), seating CSP, invigilation heap, incremental re-seat, benchmarks | ✅ |
 | 4 | Backend foundation: Spring Boot, Flyway schema, JWT auth, RBAC, audit log, OpenAPI | ✅ |
 | 5 | Master data and import system: CSV/Excel import, validation, file storage, search | ✅ |
-| 6 | Scheduling engine: async runs, SSE progress, persisted plans, comparison, cancel | ⏳ |
+| 6 | Scheduling engine: async runs, SSE progress, persisted plans, comparison, cancel | ✅ |
 | 7 | Publishing: two-person approval, PDFs, Redis seat cache, rate limiting, portals, disruptions | ⏳ |
 | 8 | Frontend I: React + TS app shell, auth, dashboard, imports, setup screens | ⏳ |
 | 9 | Frontend II: runs with live progress, timetable/seating views, approvals, student portal; full-stack Docker | ⏳ |

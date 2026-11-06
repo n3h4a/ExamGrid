@@ -38,6 +38,8 @@ curl -s localhost:8080/api/auth/me -H "Authorization: Bearer $TOKEN"
 | `EXAMGRID_STORAGE_ROOT` | `./data/storage` | Where uploaded files and PDFs are stored |
 | `EXAMGRID_ROLL_PATTERN` | `[0-9]{2}[A-Z]{2,4}[0-9]{3}` | Roll number format enforced by imports |
 | `EXAMGRID_DEMO_ENABLED` | `false` (`true` in `dev`) | Seed the synthetic demo university into an empty database |
+| `EXAMGRID_SCHEDULING_WORKER_THREADS` | `2` | Solves that may run concurrently |
+| `EXAMGRID_SCHEDULING_MAX_ACTIVE_RUNS` | `10` | Queued + running runs before `429` |
 | `SPRING_PROFILES_ACTIVE` | none | `dev` locally, `prod` for JSON (ECS) logs |
 | `PORT` | `8080` | HTTP port |
 
@@ -52,6 +54,7 @@ com.examgrid.backend
 ├── catalog     courses, students, rooms, faculty, slots, locks, same-slot groups
 ├── imports     CSV/XLSX upload → validate → report → all-or-nothing commit
 ├── storage     FileStorage abstraction, local-disk implementation
+├── scheduling  runs as jobs: snapshot loader, worker pool, SSE progress, plan storage and views
 ├── search      trigram search across students, courses, faculty, rooms
 ├── demo        synthetic demo university seeder
 ├── audit       append-only audit log + search API
@@ -69,9 +72,23 @@ com.examgrid.backend
 | Schedule setup | `GET/POST /api/slots`, `POST /api/slots/generate`, `PUT/DELETE /api/locks/{course}`, `/api/same-slot-groups` |
 | Imports | `POST /api/imports/{kind}?dryRun&mode`, `GET /api/imports`, `GET /api/imports/{id}[/file]`, `GET /api/imports/templates/{kind}` |
 | Search | `GET /api/search?q=` |
+| Schedule runs | `POST /api/schedule-runs` (202), `GET /api/schedule-runs[/{id}]`, `GET …/{id}/events` (SSE), `POST …/{id}/cancel`, `DELETE …/{id}` |
+| Plan views | `GET …/{id}/timetable`, `…/{id}/rooms?slot=`, `…/{id}/invigilation`, `…/{id}/students/{roll}`, `GET /api/schedule-runs/compare?ids=` |
 | Audit | `GET /api/audit` |
 
 See [docs/imports.md](../docs/imports.md) for file formats.
+
+## Watching a run
+
+```bash
+curl -s -XPOST localhost:8080/api/schedule-runs -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"label":"first try","timeLimitSeconds":30}'
+curl -N localhost:8080/api/schedule-runs/1/events -H "Authorization: Bearer $TOKEN"
+# event:progress  data:{"runId":1,"status":"RUNNING","phase":"OPTIMISING","pct":38,"score":132,...}
+# event:status    data:{"runId":1,"status":"DONE","phase":"DONE","pct":100,"score":0,...}
+```
+
+See [ADR-0007](../docs/adr/0007-async-runs-and-sse.md) for the job model.
 
 ## Conventions
 

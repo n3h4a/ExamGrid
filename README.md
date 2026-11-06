@@ -37,6 +37,14 @@ SPRING_PROFILES_ACTIVE=dev mvn -pl backend spring-boot:run   # admin / admin1234
 open http://localhost:8080/swagger-ui.html
 ```
 
+## How a run works
+
+`POST /api/schedule-runs` returns **202** immediately; a worker pool solves the snapshot of
+the catalog in the background while the browser watches **Server-Sent Events**
+(`phase`, `pct`, `score`). The stored plan can be browsed as a timetable, room seating charts,
+invigilation duties or per-student schedules, compared with other runs, and is flagged
+stale if the data changes afterwards ([ADR-0007](docs/adr/0007-async-runs-and-sse.md)).
+
 ## Algorithms
 
 - **Conflict graph** built in O(Σ k²) over students, weighted by shared candidates.
