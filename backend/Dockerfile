@@ -15,7 +15,7 @@ COPY backend/src backend/src
 RUN --mount=type=cache,target=/root/.m2 mvn -B -q -pl backend -am package -DskipTests \
  && java -Djarmode=tools -jar backend/target/examgrid-backend.jar extract --layers --launcher --destination /extracted
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:24-jre-alpine
 RUN addgroup -S examgrid && adduser -S -G examgrid examgrid \
  && mkdir -p /data/storage && chown -R examgrid:examgrid /data
 WORKDIR /app
