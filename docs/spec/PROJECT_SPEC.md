@@ -1,8 +1,9 @@
 # ExamGrid: project specification
 
-> This is the finalized specification ExamGrid is built against. Where the
-> implementation makes a decision the spec leaves open, the decision is recorded
-> in `docs/adr/` and referenced from here.
+> This is the product specification ExamGrid was built against, kept as the original brief.
+> Where the implementation refined it, the decision is recorded in [`docs/adr/`](../adr) and
+> summarised in [section 10](#10-where-the-implementation-refines-this-spec). For how the
+> system works today, start with the [architecture](../architecture.md).
 
 ## 1. The idea in one line
 
@@ -16,9 +17,9 @@ You upload the list of which student takes which course. ExamGrid works out **wh
  Exam cell uploads CSV/Excel        Admin clicks "Generate"         Students on result day
  (student × course)                         │                               │
         │                                   ▼                               ▼
-        ▼                          ┌──────────────────┐             GET /search/seat?roll=
- POST /imports/enrolments          │ POST /schedule-  │                     │
-        │                          │ runs  → 202      │                     ▼
+        ▼                          ┌──────────────────┐          GET /api/public/seat?roll=
+ POST /api/imports/enrolments      │ POST /api/sched- │                     │
+        │                          │ ule-runs  → 202  │                     ▼
         ▼                          └────────┬─────────┘             ┌──────────────┐
  Validate → Postgres                        │ job queued            │ Redis cache  │ ← fast
  (raw file → file storage)                  ▼                       └──────┬───────┘
@@ -42,8 +43,8 @@ You upload the list of which student takes which course. ExamGrid works out **wh
 
 1. **Import.** The exam cell uploads a file of rows like `21CS045, CS301`. The backend checks for unknown courses, duplicate rows and bad roll numbers, then writes `student`, `course` and `enrolment`. The original file goes to file storage so there is a record of exactly what was imported.
 2. **Configure.** The admin defines the **slots** (for example 10 days × Morning/Afternoon = 20 slots), the **rooms** (capacity plus a seat-grid layout) and the **faculty** available to invigilate.
-3. **Start a run.** `POST /schedule-runs` returns **202 Accepted** straight away with a run ID. A solve can take seconds to minutes, so the HTTP request must not wait for it.
-4. **Watch progress.** The UI opens `GET /schedule-runs/{id}/events`, a Server-Sent Events stream. The worker pushes messages such as `{"phase":"annealing","pct":62,"score":41}`.
+3. **Start a run.** `POST /api/schedule-runs` returns **202 Accepted** straight away with a run ID. A solve can take seconds to minutes, so the HTTP request must not wait for it.
+4. **Watch progress.** The UI opens `GET /api/schedule-runs/{id}/events`, a Server-Sent Events stream. The worker pushes messages such as `{"phase":"OPTIMISING","pct":62,"score":41}`.
 5. **Review.** The admin looks at the result: clashes (must be 0), students with two exams on one day, room usage and the overall score. They can re-run with different parameters. Every run is saved, so runs can be compared.
 6. **Publish.** One admin approves and a **second, different** admin must also approve. After that the plan is locked, hall-ticket and seating PDFs are generated, and everything is cached in Redis.
 7. **Result day.** Students log in to download their hall ticket, or search by roll number for their seat. These reads hit Redis, not the solver or a heavy SQL query.
@@ -147,7 +148,7 @@ approval(run_id, admin_id)                       ← two rows needed to publish
 
 ## 6. Security
 
-- **RBAC:** students can call only `/students/me/...`; the student ID comes from the JWT, never from a URL parameter (prevents IDOR).
+- **RBAC:** students can call only `/api/students/me/...`; the student ID comes from the JWT, never from a URL parameter (prevents IDOR).
 - **Two-person publish:** two distinct admin approvals before `PUBLISHED`.
 - **Audit log:** every import, run, manual edit and publish.
 - **Seat search:** public, rate-limited, returns only room and seat — never names.
@@ -168,3 +169,16 @@ Pre-compute `roll → {room, seat, slot}` into Redis at publish time; a lookup i
 - Infeasibility needs good error messages.
 - Manual overrides: admins pin a course to a slot ("locked" assignments).
 - Only claim résumé numbers once measured.
+
+## 10. Where the implementation refines this spec
+
+| Spec | Implementation | Why |
+|---|---|---|
+| Rooms by max-flow (3d) | **Min-cost** max-flow with a per-room mixing cap, iterated with seating | Rooms fill in priority order, and a single paper can no longer fill a room it could not be seated in ([ADR-0004](../adr/0004-rooms-seating-invigilation.md)) |
+| `room(capacity, layout_json)` | `seat_rows`, `seat_columns`, `blocked_seats` (JSON) and a derived `capacity` | The seat grid is what seating needs; capacity follows from it |
+| `audit_log(who, what, when, before, after)` | `actor`, `action`, `entity_type`, `entity_id`, `details` (JSON), `request_id` | One flexible `details` document per action, linked to the request id in the logs |
+| DSatur may need more colours than slots (3b) | DSatur with per-paper slot domains, then TabuCol repair, then certified infeasibility proofs | Greedy failure is not proof; the exam cell gets a proof or a plan ([ADR-0002](../adr/0002-colouring-strategy.md)) |
+| Score counts *students* with two exams on a day | Counts *pairs of papers* a student sits | Makes the score a sum over graph edges, so moves cost O(degree) ([ADR-0003](../adr/0003-penalty-model-and-optimisers.md)) |
+| Redis as the result-day store | Redis as a cache with a circuit breaker and a Postgres fallback | Losing Redis costs speed, never correctness ([load test](../benchmarks/load-test.md)) |
+| Admin approvals | Approvals refused when the catalog changed after the solve | A plan must describe the data it will be published against |
+

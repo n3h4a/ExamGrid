@@ -16,6 +16,21 @@ its tests green. Status is updated as milestones land.
 | 9 | Frontend II: runs with live progress, timetable/seating views, approvals, student portal; full-stack Docker | ✅ |
 | 10 | CI/CD, deployment, load tests, benchmarks, docs, demo assets | ✅ |
 
+**Status: v1.0.0 is complete.** All ten milestones have shipped; see the
+[changelog](../CHANGELOG.md).
+
+## Beyond 1.0
+
+Candidates for future work, each grounded in a limitation documented elsewhere:
+
+| Idea | Why | Where it is discussed |
+|---|---|---|
+| Sign-in through the institution's identity provider (OIDC), with MFA | Removes local passwords; the API already validates JWTs as a resource server | [Security: known limitations](security.md#known-limitations) |
+| Early token revocation | Disabling an account should end existing sessions, not only block new logins | [Security: known limitations](security.md#known-limitations) |
+| Several API instances sharing one run queue | Run claims are already atomic in Postgres; live progress would need Redis pub/sub, because it is broadcast in-process today | [ADR-0007](adr/0007-async-runs-and-sse.md) |
+| Building and department preferences in room allocation | A cost on paper → room edges, without changing the flow algorithm | [ADR-0004](adr/0004-rooms-seating-invigilation.md) |
+| Tests for the remaining data-entry screens | Frontend line coverage is 50 %; the untested code is mostly simple forms | [Testing report](testing.md) |
+
 ---
 
 ## M1 — Solver core
