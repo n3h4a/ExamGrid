@@ -1,0 +1,13 @@
+benchmark,courses,avg_ms,error_ms
+conflictGraph,50,0.076,0.016
+conflictGraph,100,0.155,0.042
+conflictGraph,200,0.315,0.411
+conflictGraph,500,3.388,4.271
+dsatur,50,0.040,0.062
+dsatur,100,0.107,0.127
+dsatur,200,0.270,0.088
+dsatur,500,1.657,1.169
+fullPipeline,50,14.794,5.825
+fullPipeline,100,24.855,6.724
+fullPipeline,200,37.086,35.278
+fullPipeline,500,202.020,844.077

@@ -35,6 +35,8 @@ public record InfeasibilityIssue(Type type, String message, List<String> courses
         PAPER_TOO_LARGE,
         /** Total seats needed exceed total seats across all slots. */
         CAPACITY_EXCEEDED,
+        /** The exams of a slot cannot be spread over the rooms without neighbours sharing a paper. */
+        SEATING,
         /** No proof found, but the search could not place these exams. */
         UNRESOLVED
     }

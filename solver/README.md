@@ -19,9 +19,24 @@ Optimizer ── SimulatedAnnealing (move · swap · Kempe chain) | TabuSearch
    │
    ▼
 TimetableStage.Outcome ── slot per exam + TimetableMetrics
+   │
+   ▼  for every slot
+RoomAllocator ── min-cost max-flow with mixing caps ⇄ SeatingSolver (colour classes → CSP)
+   │
+   ▼
+InvigilationAssigner ── min-heap keyed by duty load
+   │
+   ▼
+SolutionValidator ── independent check of every hard constraint
+   │
+   ▼
+Solution ── exams, seats, invigilators, SolutionMetrics
+
+DisruptionReseater ── "Room 204 is flooded": re-seat only the displaced students
 ```
 
-Rooms, seating and invigilation are added on top of this in milestone 3.
+See [ADR-0004](../docs/adr/0004-rooms-seating-invigilation.md) for the allocation design and
+[the benchmarks](../docs/benchmarks/README.md) for measured performance.
 
 ## Packages
 
@@ -31,7 +46,11 @@ Rooms, seating and invigilation are added on top of this in milestone 3.
 | `graph` | `ExamGroups`, `ConflictGraph`, `CliqueFinder` |
 | `coloring` | `DSaturColoring`, `TabuColRepair`, `InfeasibilityAnalyzer`, `InitialTimetable` |
 | `optimize` | `PenaltyModel`, incremental `Timetable`, `SimulatedAnnealing`, `TabuSearch`, `TimetableMetrics` |
-| `pipeline` | `TimetableStage` orchestration |
+| `rooms` | `MinCostMaxFlow`, `RoomAllocator` |
+| `seating` | `SeatingSolver`, `SeatingPlan` |
+| `invigilation` | `InvigilationAssigner`, `Duty` |
+| `incremental` | `DisruptionReseater` |
+| `pipeline` | `TimetableStage`, `ExamGridSolver`, `Solution`, `SolutionValidator` |
 | `progress` | `ProgressListener`, `ProgressEvent`, `Phase`, `CancellationToken` |
 | `io` | Dependency-free CSV reader/loader and `SyntheticInstanceGenerator` |
 | `cli` | `SolverCli` |
@@ -44,6 +63,8 @@ Rooms, seating and invigilation are added on top of this in milestone 3.
 | DSatur | O((n + m) log n + n·K) |
 | Annealing move / swap / Kempe | O(deg) / O(deg a + deg b) / O(chain · deg) |
 | Hall check per student | O(k² · K) with Kuhn's matching |
+| Room allocation per slot | SPFA min-cost flow on (papers + rooms) nodes |
+| Invigilation | O(D log F) for D duties and F faculty |
 
 ## CLI
 
@@ -51,6 +72,7 @@ Rooms, seating and invigilation are added on top of this in milestone 3.
 mvn -pl solver package
 java -jar solver/target/examgrid-solver-1.0.0-SNAPSHOT.jar --synthetic 180:2400
 java -jar solver/target/examgrid-solver-1.0.0-SNAPSHOT.jar --synthetic 180:2400 --days 5 --optimizer tabu
+java -jar solver/target/examgrid-solver-1.0.0-SNAPSHOT.jar --synthetic 180:2400 --out plan/
 java -jar solver/target/examgrid-solver-1.0.0-SNAPSHOT.jar --enrolments enrolments.csv --rooms rooms.csv
 ```
 
@@ -68,4 +90,8 @@ graphs), jqwik property tests check that:
 - after any random sequence of moves, swaps and Kempe chains, the incremental cost equals a
   full recomputation and every hard constraint still holds;
 - the graph-based score equals the score recomputed from raw enrolments;
-- optimisers never worsen the start and never move a locked exam.
+- optimisers never worsen the start and never move a locked exam;
+- any seating plan has no same-paper neighbours and seats exactly the requested counts;
+- on random universities, every plan has no clash, no over-capacity room, no same-paper
+  neighbours and exactly one seat per enrolment (with coverage statistics showing most random
+  instances are solved, not rejected).

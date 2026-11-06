@@ -7,7 +7,7 @@ its tests green. Status is updated as milestones land.
 |---|---|---|
 | 1 | Solver core: conflict graph, DSatur, infeasibility diagnostics | ✅ |
 | 2 | Solver optimisation: penalty model, simulated annealing, tabu search | ✅ |
-| 3 | Solver allocation: rooms (min-cost max-flow), seating CSP, invigilation heap, incremental re-seat, benchmarks | ⏳ |
+| 3 | Solver allocation: rooms (min-cost max-flow), seating CSP, invigilation heap, incremental re-seat, benchmarks | ✅ |
 | 4 | Backend foundation: Spring Boot, Flyway schema, JWT auth, RBAC, audit log, OpenAPI | ⏳ |
 | 5 | Master data and import system: CSV/Excel import, validation, file storage, search | ⏳ |
 | 6 | Scheduling engine: async runs, SSE progress, persisted plans, comparison, cancel | ⏳ |
@@ -42,7 +42,7 @@ its tests green. Status is updated as milestones land.
 - **Goal:** complete plans: rooms, seats and invigilators, plus incremental repair.
 - **Features:** min-cost max-flow room allocation with a mixing cap; grid seating with colour-class partitioning and forward-checking backtracking; min-heap invigilation; disruption re-seating; full pipeline and validator; JMH benchmark module.
 - **Tests:** jqwik end-to-end properties (no clash, no over-capacity room, no adjacent same paper, exactly one seat per enrolment); targeted tests for each allocator.
-- **Docs:** `docs/benchmarks.md` with measured numbers.
+- **Docs:** `docs/benchmarks/README.md` with measured numbers, ADR-0004.
 - **Commit:** `feat(solver): allocate rooms, seats and invigilators with incremental re-seating`
 
 ## M4 — Backend foundation

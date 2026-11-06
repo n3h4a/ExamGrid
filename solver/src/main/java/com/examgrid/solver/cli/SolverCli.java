@@ -1,15 +1,16 @@
 package com.examgrid.solver.cli;
 
 import com.examgrid.solver.coloring.InfeasibleException;
-import com.examgrid.solver.graph.ExamGroups;
 import com.examgrid.solver.io.InstanceCsvLoader;
 import com.examgrid.solver.io.SyntheticInstanceGenerator;
 import com.examgrid.solver.model.OptimizerType;
 import com.examgrid.solver.model.ProblemInstance;
 import com.examgrid.solver.model.Slot;
 import com.examgrid.solver.model.SolverParams;
-import com.examgrid.solver.optimize.OptimizerResult;
 import com.examgrid.solver.optimize.TimetableMetrics;
+import com.examgrid.solver.pipeline.ExamGridSolver;
+import com.examgrid.solver.pipeline.Solution;
+import com.examgrid.solver.pipeline.SolutionMetrics;
 import com.examgrid.solver.pipeline.TimetableStage;
 import com.examgrid.solver.progress.CancellationToken;
 import com.examgrid.solver.progress.ProgressListener;
@@ -26,7 +27,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Command-line entry point: CSV (or synthetic data) in, timetable out.
+ * Command-line entry point: CSV (or synthetic data) in, exam plan out. With rooms the full
+ * pipeline runs (timetable, seats, invigilators); without rooms only the timetable is built.
  *
  * <pre>
  * java -jar examgrid-solver.jar --enrolments enrolments.csv [--courses courses.csv]
@@ -63,7 +65,7 @@ public final class SolverCli {
         }
         try {
             ProblemInstance instance = load(options);
-            return solve(instance);
+            return solve(instance, options.containsKey("out") ? Path.of(options.get("out")) : null);
         } catch (IllegalArgumentException e) {
             err.println("Invalid input: " + e.getMessage());
             return 2;
@@ -73,49 +75,73 @@ public final class SolverCli {
         }
     }
 
-    private int solve(ProblemInstance instance) {
-        out.printf("Loaded %d courses, %d students, %d enrolments, %d slots, %d rooms%n",
+    private int solve(ProblemInstance instance, Path outDir) throws IOException {
+        out.printf("Loaded %d courses, %d students, %d enrolments, %d slots, %d rooms, %d faculty%n",
                 instance.courseCount(), instance.studentCount(), instance.enrolmentCount(),
-                instance.slotCount(), instance.roomCount());
-        long started = System.nanoTime();
-        TimetableStage.Outcome result;
+                instance.slotCount(), instance.roomCount(), instance.faculty().size());
         try {
-            result = new TimetableStage().run(instance, ProgressListener.NONE, CancellationToken.none());
+            if (instance.roomCount() == 0) {
+                TimetableStage.Outcome result = new TimetableStage().run(instance, ProgressListener.NONE,
+                        CancellationToken.none());
+                printTimetableSummary(instance, result.dsaturColours(), result.repaired(),
+                        result.optimisation().initialScore(), result.optimisation().iterations(),
+                        result.optimisation().stopReason().name(), result.metrics());
+                out.println("(no rooms given: seating and invigilation skipped)");
+                out.println();
+                Map<String, String> slotOf = new HashMap<>();
+                for (int c = 0; c < instance.courseCount(); c++) {
+                    slotOf.put(instance.course(c).code(), instance.slot(result.slotOfCourse(c)).id());
+                }
+                printTimetable(instance, slotOf);
+                return 0;
+            }
+            Solution solution = new ExamGridSolver().solve(instance);
+            SolutionMetrics m = solution.metrics();
+            printTimetableSummary(instance, m.dsaturColours(), m.repaired(), m.initialScore(),
+                    m.optimiserIterations(), m.optimiserStop(), m.timetable());
+            out.printf("Rooms: %d room-slots used, %.0f%% of their seats filled | invigilators %d assigned,"
+                            + " %d unfilled, %d-%d duties each%n",
+                    m.roomSlotsUsed(), 100 * m.seatUtilisation(), m.invigilationDuties(), m.unfilledDuties(),
+                    m.minFacultyDuties(), m.maxFacultyDuties());
+            solution.warnings().forEach(w -> out.println("Warning: " + w));
+            out.printf("Solved in %d ms%n%n", m.elapsedMillis());
+            Map<String, String> slotOf = new HashMap<>();
+            solution.exams().forEach(e -> slotOf.put(e.courseCode(), e.slotId()));
+            printTimetable(instance, slotOf);
+            if (outDir != null) {
+                SolutionCsvWriter.write(solution, outDir);
+                out.println();
+                out.println("Wrote timetable.csv, seats.csv and invigilation.csv to " + outDir);
+            }
+            return 0;
         } catch (InfeasibleException e) {
             err.println(e.report().summary());
             return 1;
         }
-        long elapsedMs = (System.nanoTime() - started) / 1_000_000;
-        OptimizerResult opt = result.optimisation();
-        TimetableMetrics m = result.metrics();
-        out.printf("Conflict graph: %d exam nodes, %d edges, max degree %d%n",
-                result.graph().nodeCount(), result.graph().edgeCount(), result.graph().maxDegree());
-        out.printf("DSatur: clash-free using %d of %d slots%s%n", result.dsaturColours(), instance.slotCount(),
-                result.repaired() ? " (TabuCol repair needed)" : "");
+    }
+
+    private void printTimetableSummary(ProblemInstance instance, int colours, boolean repaired, long initialScore,
+                                       long iterations, String stop, TimetableMetrics m) {
+        out.printf("DSatur: clash-free using %d of %d slots%s%n", colours, instance.slotCount(),
+                repaired ? " (TabuCol repair needed)" : "");
         out.printf("%s: score %d -> %d in %d iterations (%s)%n", instance.params().optimizer(),
-                opt.initialScore(), opt.finalScore(), opt.iterations(), opt.stopReason());
+                initialScore, m.score(), iterations, stop);
         out.printf("Clashes %d | same-day pairs %d (%d students) | back-to-back pairs %d | hard-gap pairs %d"
                         + " | max exams per day %d%n",
                 m.clashPairs(), m.sameDayPairs(), m.studentsWithSameDay(), m.backToBackPairs(), m.hardGapPairs(),
                 m.maxExamsPerStudentDay());
-        out.printf("Solved in %d ms%n%n", elapsedMs);
-        printTimetable(instance, result.groups(), result.slotOfNode());
-        return 0;
     }
 
-    private void printTimetable(ProblemInstance instance, ExamGroups groups, int[] slotOfNode) {
-        List<List<String>> bySlot = new ArrayList<>();
-        for (int s = 0; s < instance.slotCount(); s++) {
-            bySlot.add(new ArrayList<>());
-        }
+    private void printTimetable(ProblemInstance instance, Map<String, String> slotOfCourse) {
+        Map<String, List<String>> bySlot = new HashMap<>();
         for (int c = 0; c < instance.courseCount(); c++) {
-            bySlot.get(slotOfNode[groups.nodeOf(c)]).add(instance.course(c).code()
-                    + "(" + instance.studentsOf(c).length + ")");
+            String code = instance.course(c).code();
+            bySlot.computeIfAbsent(slotOfCourse.get(code), k -> new ArrayList<>())
+                    .add(code + "(" + instance.studentsOf(c).length + ")");
         }
-        for (int s = 0; s < instance.slotCount(); s++) {
-            Slot slot = instance.slot(s);
-            out.printf("%-10s %-9s %s%n", slot.date(), slot.session(),
-                    bySlot.get(s).isEmpty() ? "-" : String.join(" ", bySlot.get(s)));
+        for (Slot slot : instance.slots()) {
+            List<String> exams = bySlot.getOrDefault(slot.id(), List.of());
+            out.printf("%-10s %-9s %s%n", slot.date(), slot.session(), exams.isEmpty() ? "-" : String.join(" ", exams));
         }
     }
 
@@ -192,6 +218,7 @@ public final class SolverCli {
 
                 Optimiser options:
                   --optimizer annealing|tabu|none   --iterations 300000   --time-limit SECONDS
+                  --out DIR    write timetable.csv, seats.csv and invigilation.csv
 
                 CSV formats (';' separates list values):
                   enrolments.csv  roll,course

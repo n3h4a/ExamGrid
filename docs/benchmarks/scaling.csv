@@ -1,0 +1,5 @@
+courses,students,enrolments,slots,rooms,faculty,median_ms,dsatur_score,final_score,same_day_pairs,back_to_back_pairs,room_slots,seat_utilisation,duty_spread
+48,650,3295,24,6,25,25,13512,0,0,0,89,0.536,5–6
+96,1300,6581,24,10,49,38,22988,0,0,0,119,0.816,5–6
+192,2600,13160,24,20,97,59,51380,0,0,0,213,0.903,5–6
+480,6500,65390,24,98,294,181,325560,1938,168,81,960,0.987,7–9
