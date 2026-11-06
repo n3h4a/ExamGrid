@@ -18,7 +18,10 @@ level deeper, and each is written against the code as it stands.
 | [Load test](benchmarks/load-test.md) | Result-day HTTP performance, including a Redis outage |
 | [Deployment](deployment.md) | Single VM with Caddy, Render blueprint, configuration, operations |
 | [Specification](spec/PROJECT_SPEC.md) | The product specification ExamGrid was built against |
-| [Roadmap](ROADMAP.md) | The ten milestones and what each delivered |
+| [Roadmap](ROADMAP.md) | The ten milestones, project status, and candidates for future work |
+
+Project: [contributing](../CONTRIBUTING.md) · [changelog](../CHANGELOG.md) ·
+[security policy](../.github/SECURITY.md) · [licence](../LICENSE).
 
 Component guides: [solver](../solver/README.md) · [backend](../backend/README.md) ·
 [frontend](../frontend/README.md) · [load tests](../loadtest/README.md) ·

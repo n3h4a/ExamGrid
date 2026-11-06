@@ -18,7 +18,8 @@
   <a href="#quick-start"><b>Run it in one command</b></a> ·
   <a href="docs/architecture.md"><b>Architecture</b></a> ·
   <a href="docs/api/README.md"><b>API</b></a> ·
-  <a href="docs/README.md"><b>Documentation</b></a>
+  <a href="docs/README.md"><b>Documentation</b></a> ·
+  <a href="CHANGELOG.md"><b>Changelog</b></a>
 </p>
 
 ---
@@ -66,8 +67,8 @@ same few minutes.
   <img src="docs/demo/examgrid-demo.gif" alt="Walkthrough: start a run, watch it solve, review timetable and seating, approve as two people, publish, find a seat" width="100%">
 </p>
 
-<p align="center"><sub>45 seconds, recorded from the real app: solve → review → two-person approval → publish → find my seat.
-<a href="docs/demo/examgrid-demo.mp4">Full-resolution MP4</a>.</sub></p>
+<p align="center"><sub>Recorded from the real app: solve → review → two-person approval → publish → find my seat.
+<a href="docs/demo/examgrid-demo.mp4">Full-resolution MP4 (45 s)</a>.</sub></p>
 
 ### A season, step by step
 
@@ -263,7 +264,7 @@ You only need Docker:
 
 ```bash
 git clone https://github.com/n3h4a/ExamGrid.git && cd ExamGrid
-docker compose -f docker-compose.full.yml up --build
+docker compose -f docker-compose.full.yml up --build      # or: make up
 ```
 
 Open <http://localhost:8088>. A demo university is already loaded: 1,500 students, 120
@@ -276,31 +277,21 @@ courses, 14 rooms and 61 faculty.
 | `23ce001` | `demo12345` | the student portal and hall ticket |
 | *(no login)* | | <http://localhost:8088/seat>, roll number `23CE001` |
 
-<details>
-<summary><b>Local development</b> (hot reload)</summary>
+### Everyday commands
 
-```bash
-docker compose up -d                                         # Postgres + Redis only
-mvn -pl solver -am install -DskipTests
-SPRING_PROFILES_ACTIVE=dev mvn -pl backend spring-boot:run   # API on :8080 with demo data and Swagger UI
-cd frontend && npm ci && npm run dev                         # UI on :5173, proxies /api
-```
+The [`Makefile`](Makefile) wraps every workflow; run `make` to list them all.
 
-Run every check CI runs:
+| Command | What it does |
+|---|---|
+| `make up` / `make down` / `make reset` | Start the full stack on :8088, stop it, or stop it and wipe its data |
+| `make infra`, then `make api` and `make web` | Local development: Postgres and Redis in Docker, the API on :8080 (demo data, Swagger UI), the web app on :5173 with hot reload |
+| `make test` | Every check CI runs: Maven verify with Testcontainers, then frontend lint, typecheck, tests and build |
+| `make solve` | Plan a synthetic university from the command line |
+| `make bench` / `make loadtest` | Re-measure solver scaling, or run the k6 result-day test against the stack |
+| `make screenshots` / `make brand` | Regenerate the documentation images from the running product |
 
-```bash
-mvn -B verify                                                # needs Docker for Testcontainers
-cd frontend && npm run lint && npm run typecheck && npm run test:coverage && npm run build
-```
-
-Use the solver on its own:
-
-```bash
-mvn -pl solver package
-java -jar solver/target/examgrid-solver-1.0.0-SNAPSHOT.jar --synthetic 180:2400 --days 5 --optimizer tabu
-```
-
-</details>
+Development needs Java 21, Maven 3.9 and Node 22 as well as Docker. The
+[contributing guide](CONTRIBUTING.md) covers setup and conventions.
 
 ## Deployment
 
@@ -315,6 +306,21 @@ deployment paths are ready:
 
 See the [deployment guide](docs/deployment.md) and the [security model](docs/security.md).
 
+## Project status
+
+**v1.0.0 is complete.** All ten milestones of the [roadmap](docs/ROADMAP.md) have shipped, CI
+is green, and the [changelog](CHANGELOG.md) lists what is included. The roadmap also lists
+candidates for future work, each grounded in a documented limitation.
+
+## Contributing and security
+
+Contributions are welcome: start with [CONTRIBUTING.md](CONTRIBUTING.md), which covers the
+five-minute setup, the checks a pull request must pass and the project's conventions. Bug
+reports and feature requests use the issue templates.
+
+Please report vulnerabilities privately as described in [SECURITY.md](.github/SECURITY.md),
+never in a public issue.
+
 ## Repository layout
 
 | Path | Contents |
@@ -327,7 +333,8 @@ See the [deployment guide](docs/deployment.md) and the [security model](docs/sec
 | [`deploy/`](deploy) | Production Compose file, Caddy config and backups |
 | [`samples/`](samples) | A small fictional dataset for trying imports |
 | [`tools/`](tools) | Scripts that regenerate the banner and every screenshot |
-| [`docs/`](docs/README.md) | Architecture, ADRs, API, benchmarks, testing, security, deployment |
+| [`docs/`](docs/README.md) | Architecture, data model, algorithms, technology choices, ADRs, API, security, testing, benchmarks, deployment |
+| [`.github/`](.github) | CI workflow, Dependabot, issue and pull-request templates, code owners, security policy |
 
 ## Author
 
