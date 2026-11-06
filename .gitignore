@@ -1,0 +1,33 @@
+# Build output
+target/
+build/
+dist/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# Node
+node_modules/
+.vite/
+coverage/
+
+# Runtime data
+data/
+storage/
+*.log
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# jqwik
+.jqwik-database
