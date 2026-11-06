@@ -17,9 +17,10 @@ node_modules/
 .vite/
 coverage/
 
-# Runtime data
-data/
-storage/
+# Runtime data (uploads and PDFs default to ./data/storage); anchored so that source
+# packages with the same name are never ignored
+/data/
+/backend/data/
 *.log
 .env
 .env.*
