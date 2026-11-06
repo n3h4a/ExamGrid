@@ -1,19 +1,43 @@
+# Dependency updates arrive as one grouped pull request per ecosystem per month, minor and
+# patch versions only. Major upgrades (Spring Boot, React, Vite, TypeScript, ...) change APIs
+# and are done by hand as planned work, so they are ignored here.
 version: 2
 updates:
   - package-ecosystem: maven
     directory: /
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 5
+    schedule: { interval: monthly }
+    open-pull-requests-limit: 2
+    groups:
+      maven:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: npm
     directory: /frontend
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 5
+    schedule: { interval: monthly }
+    open-pull-requests-limit: 2
     groups:
-      dev-dependencies:
-        dependency-type: development
+      npm:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: docker
     directories: [/backend, /frontend]
-    schedule: { interval: weekly }
+    schedule: { interval: monthly }
+    groups:
+      base-images:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
-    schedule: { interval: weekly }
+    schedule: { interval: monthly }
+    groups:
+      actions:
+        patterns: ["*"]
