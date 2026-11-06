@@ -2,7 +2,7 @@
 # Build context: repository root (the backend depends on the solver module).
 #   docker build -f backend/Dockerfile -t examgrid-api .
 
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /src
 # Poms first so dependency resolution is cached until a pom changes.
 COPY pom.xml .
