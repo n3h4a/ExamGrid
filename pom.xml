@@ -15,6 +15,7 @@
     <modules>
         <module>solver</module>
         <module>benchmarks</module>
+        <module>backend</module>
     </modules>
 
     <properties>

@@ -1,0 +1,7 @@
+examgrid:
+  security:
+    jwt-secret: test-secret-0123456789abcdef-0123456789abcdef
+    token-ttl: 1h
+  bootstrap-admin:
+    username: admin
+    password: admin-test-password

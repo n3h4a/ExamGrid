@@ -11,6 +11,7 @@ course; ExamGrid works out **when** every exam happens, **where** every student 
 | Path | What it is |
 |---|---|
 | [`solver/`](solver) | Framework-free Java 21 scheduling engine and CLI ([details](solver/README.md)) |
+| [`backend/`](backend) | Spring Boot 4 REST API: PostgreSQL, JWT, audit log ([details](backend/README.md)) |
 | [`benchmarks/`](benchmarks) | JMH benchmarks and the scaling report |
 | [`docs/spec`](docs/spec/PROJECT_SPEC.md) | Product and algorithm specification |
 | [`docs/benchmarks`](docs/benchmarks/README.md) | Measured solver performance |
@@ -25,7 +26,16 @@ java -jar solver/target/examgrid-solver-1.0.0-SNAPSHOT.jar --synthetic 180:2400 
 java -jar solver/target/examgrid-solver-1.0.0-SNAPSHOT.jar --synthetic 180:2400 --out plan/   # CSV export
 ```
 
-## Algorithms (so far)
+## Run the API locally
+
+```bash
+docker compose up -d
+mvn -pl solver -am install -DskipTests
+SPRING_PROFILES_ACTIVE=dev mvn -pl backend spring-boot:run   # admin / admin12345
+open http://localhost:8080/swagger-ui.html
+```
+
+## Algorithms
 
 - **Conflict graph** built in O(Σ k²) over students, weighted by shared candidates.
 - **Union-find** merges "same-slot" common papers into one node.

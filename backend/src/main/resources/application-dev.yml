@@ -1,0 +1,7 @@
+# Local development: a throwaway secret and a bootstrap admin. Never use in production.
+examgrid:
+  security:
+    jwt-secret: dev-only-secret-change-me-0123456789abcdef
+  bootstrap-admin:
+    username: admin
+    password: admin12345

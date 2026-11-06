@@ -1,0 +1,5 @@
+# Production: JSON logs for log aggregation; everything else comes from environment variables.
+logging:
+  structured:
+    format:
+      console: ecs
