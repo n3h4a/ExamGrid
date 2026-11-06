@@ -18,7 +18,7 @@ class SolverCliTest {
     @Test
     void solvesASyntheticInstance() {
         assertThat(cli.run(new String[] {"--synthetic", "60:400"})).isZero();
-        assertThat(out.toString(StandardCharsets.UTF_8)).contains("Clash-free timetable");
+        assertThat(out.toString(StandardCharsets.UTF_8)).contains("DSatur: clash-free").contains("ANNEALING: score").contains("Clashes 0");
     }
 
     @Test

@@ -6,7 +6,7 @@ its tests green. Status is updated as milestones land.
 | # | Milestone | Status |
 |---|---|---|
 | 1 | Solver core: conflict graph, DSatur, infeasibility diagnostics | ✅ |
-| 2 | Solver optimisation: penalty model, simulated annealing, tabu search | ⏳ |
+| 2 | Solver optimisation: penalty model, simulated annealing, tabu search | ✅ |
 | 3 | Solver allocation: rooms (min-cost max-flow), seating CSP, invigilation heap, incremental re-seat, benchmarks | ⏳ |
 | 4 | Backend foundation: Spring Boot, Flyway schema, JWT auth, RBAC, audit log, OpenAPI | ⏳ |
 | 5 | Master data and import system: CSV/Excel import, validation, file storage, search | ⏳ |

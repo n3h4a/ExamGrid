@@ -1,15 +1,18 @@
 package com.examgrid.solver.cli;
 
-import com.examgrid.solver.coloring.ColoringProblem;
-import com.examgrid.solver.coloring.InfeasibilityAnalyzer;
 import com.examgrid.solver.coloring.InfeasibleException;
-import com.examgrid.solver.coloring.InitialTimetable;
-import com.examgrid.solver.graph.ConflictGraph;
 import com.examgrid.solver.graph.ExamGroups;
 import com.examgrid.solver.io.InstanceCsvLoader;
 import com.examgrid.solver.io.SyntheticInstanceGenerator;
+import com.examgrid.solver.model.OptimizerType;
 import com.examgrid.solver.model.ProblemInstance;
 import com.examgrid.solver.model.Slot;
+import com.examgrid.solver.model.SolverParams;
+import com.examgrid.solver.optimize.OptimizerResult;
+import com.examgrid.solver.optimize.TimetableMetrics;
+import com.examgrid.solver.pipeline.TimetableStage;
+import com.examgrid.solver.progress.CancellationToken;
+import com.examgrid.solver.progress.ProgressListener;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -71,27 +74,32 @@ public final class SolverCli {
     }
 
     private int solve(ProblemInstance instance) {
-        long started = System.nanoTime();
-        ExamGroups groups = ExamGroups.of(instance);
-        ConflictGraph graph = ConflictGraph.build(instance, groups);
-        ColoringProblem problem = ColoringProblem.from(instance, graph);
         out.printf("Loaded %d courses, %d students, %d enrolments, %d slots, %d rooms%n",
                 instance.courseCount(), instance.studentCount(), instance.enrolmentCount(),
                 instance.slotCount(), instance.roomCount());
-        out.printf("Conflict graph: %d exam nodes, %d edges, max degree %d%n",
-                graph.nodeCount(), graph.edgeCount(), graph.maxDegree());
-        InitialTimetable.Result result;
+        long started = System.nanoTime();
+        TimetableStage.Outcome result;
         try {
-            result = new InitialTimetable(20_000, instance.params().seed())
-                    .build(new InfeasibilityAnalyzer(instance, graph, problem), problem);
+            result = new TimetableStage().run(instance, ProgressListener.NONE, CancellationToken.none());
         } catch (InfeasibleException e) {
             err.println(e.report().summary());
             return 1;
         }
         long elapsedMs = (System.nanoTime() - started) / 1_000_000;
-        out.printf("Clash-free timetable using %d of %d slots%s in %d ms%n%n", result.colorsUsed(),
-                instance.slotCount(), result.repaired() ? " (TabuCol repair needed)" : "", elapsedMs);
-        printTimetable(instance, groups, result.slotOf());
+        OptimizerResult opt = result.optimisation();
+        TimetableMetrics m = result.metrics();
+        out.printf("Conflict graph: %d exam nodes, %d edges, max degree %d%n",
+                result.graph().nodeCount(), result.graph().edgeCount(), result.graph().maxDegree());
+        out.printf("DSatur: clash-free using %d of %d slots%s%n", result.dsaturColours(), instance.slotCount(),
+                result.repaired() ? " (TabuCol repair needed)" : "");
+        out.printf("%s: score %d -> %d in %d iterations (%s)%n", instance.params().optimizer(),
+                opt.initialScore(), opt.finalScore(), opt.iterations(), opt.stopReason());
+        out.printf("Clashes %d | same-day pairs %d (%d students) | back-to-back pairs %d | hard-gap pairs %d"
+                        + " | max exams per day %d%n",
+                m.clashPairs(), m.sameDayPairs(), m.studentsWithSameDay(), m.backToBackPairs(), m.hardGapPairs(),
+                m.maxExamsPerStudentDay());
+        out.printf("Solved in %d ms%n%n", elapsedMs);
+        printTimetable(instance, result.groups(), result.slotOfNode());
         return 0;
     }
 
@@ -116,17 +124,29 @@ public final class SolverCli {
         int sessions = Integer.parseInt(options.getOrDefault("sessions", "2"));
         LocalDate start = LocalDate.parse(options.getOrDefault("start", "2026-12-01"));
         long seed = Long.parseLong(options.getOrDefault("seed", "7"));
+        SolverParams.Builder params = SolverParams.builder().seed(seed);
+        if (options.containsKey("optimizer")) {
+            params.optimizer(OptimizerType.valueOf(options.get("optimizer").toUpperCase(java.util.Locale.ROOT)));
+        }
+        if (options.containsKey("iterations")) {
+            params.maxIterations(Long.parseLong(options.get("iterations")));
+        }
+        if (options.containsKey("time-limit")) {
+            params.timeLimitMillis(Long.parseLong(options.get("time-limit")) * 1000);
+        }
 
         if (options.containsKey("synthetic")) {
             String[] parts = options.get("synthetic").split(":");
             if (parts.length != 2) {
                 throw new IllegalArgumentException("--synthetic expects COURSES:STUDENTS, e.g. 180:2400");
             }
-            return SyntheticInstanceGenerator.generate(new SyntheticInstanceGenerator.Spec(
-                    Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), days, sessions, start, seed));
+            return SyntheticInstanceGenerator.builder(new SyntheticInstanceGenerator.Spec(
+                    Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), days, sessions, start, seed))
+                    .params(params.build())
+                    .build();
         }
 
-        ProblemInstance.Builder builder = ProblemInstance.builder();
+        ProblemInstance.Builder builder = ProblemInstance.builder().params(params.build());
         Set<String> courses = new HashSet<>();
         if (options.containsKey("courses")) {
             courses.addAll(InstanceCsvLoader.loadCourses(Path.of(options.get("courses")), builder));
@@ -169,6 +189,9 @@ public final class SolverCli {
                   examgrid-solver --enrolments FILE [--courses FILE] [--rooms FILE] [--faculty FILE]
                                   [--days 10] [--sessions 2] [--start 2026-12-01]
                   examgrid-solver --synthetic COURSES:STUDENTS [--days 10] [--sessions 2] [--seed 7]
+
+                Optimiser options:
+                  --optimizer annealing|tabu|none   --iterations 300000   --time-limit SECONDS
 
                 CSV formats (';' separates list values):
                   enrolments.csv  roll,course
