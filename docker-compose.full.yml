@@ -1,0 +1,73 @@
+# The whole stack on one machine: PostgreSQL, Redis, the API and the web front end.
+#   docker compose -f docker-compose.full.yml up --build
+#   open http://localhost:8088     (admin / admin12345 unless overridden in .env)
+#
+# Defaults are for local evaluation only; production uses deploy/ (secrets required).
+name: examgrid
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: examgrid
+      POSTGRES_USER: examgrid
+      POSTGRES_PASSWORD: ${EXAMGRID_DB_PASSWORD:-examgrid}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U examgrid -d examgrid"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: examgrid-api:local
+    environment:
+      EXAMGRID_DB_URL: jdbc:postgresql://postgres:5432/examgrid
+      EXAMGRID_DB_USERNAME: examgrid
+      EXAMGRID_DB_PASSWORD: ${EXAMGRID_DB_PASSWORD:-examgrid}
+      EXAMGRID_REDIS_URL: redis://redis:6379
+      EXAMGRID_JWT_SECRET: ${EXAMGRID_JWT_SECRET:-local-compose-secret-change-me-0123456789}
+      EXAMGRID_BOOTSTRAP_ADMIN_USERNAME: ${EXAMGRID_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      EXAMGRID_BOOTSTRAP_ADMIN_PASSWORD: ${EXAMGRID_BOOTSTRAP_ADMIN_PASSWORD:-admin12345}
+      EXAMGRID_DEMO_ENABLED: ${EXAMGRID_DEMO_ENABLED:-true}
+      EXAMGRID_CORS_ORIGINS: http://localhost:8088
+    volumes:
+      - api-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: frontend
+    image: examgrid-web:local
+    environment:
+      API_UPSTREAM: api:8080
+    ports:
+      - "8088:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  api-data:

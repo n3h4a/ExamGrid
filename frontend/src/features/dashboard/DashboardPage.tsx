@@ -51,6 +51,9 @@ export function DashboardPage() {
           <p className="mt-4 text-sm text-slate-600">
             {ready ? 'All inputs are in place. Locks and same-slot groups are optional.' : 'Complete the steps above before generating a timetable.'}
           </p>
+          {ready && (
+            <Link to="/admin/runs" className="mt-3 inline-block text-sm font-medium text-brand-600 hover:underline">Go to schedule runs →</Link>
+          )}
           <p className="mt-2 text-xs text-slate-500">
             {s.locks} locked course(s) · {s.sameSlotGroups} same-slot group(s)
           </p>

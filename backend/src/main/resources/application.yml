@@ -57,6 +57,8 @@ examgrid:
     enabled: ${EXAMGRID_RATE_LIMIT_ENABLED:true}
     public-per-minute: ${EXAMGRID_RATE_LIMIT_PUBLIC:60}
     login-per-minute: ${EXAMGRID_RATE_LIMIT_LOGIN:10}
+  demo:
+    enabled: ${EXAMGRID_DEMO_ENABLED:false}
   scheduling:
     worker-threads: ${EXAMGRID_SCHEDULING_WORKER_THREADS:2}
     max-active-runs: ${EXAMGRID_SCHEDULING_MAX_ACTIVE_RUNS:10}

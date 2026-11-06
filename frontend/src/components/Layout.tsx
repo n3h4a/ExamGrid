@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Rocket,
   ScrollText,
   ShieldCheck,
   Users,
@@ -49,6 +50,7 @@ const NAV: Record<Role, { section: string; items: NavItem[] }[]> = {
       items: [
         { to: '/admin/slots', label: 'Exam slots', icon: <CalendarDays /> },
         { to: '/admin/rules', label: 'Locks & groups', icon: <Workflow /> },
+        { to: '/admin/runs', label: 'Schedule runs', icon: <Rocket /> },
       ],
     },
     {

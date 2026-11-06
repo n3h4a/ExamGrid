@@ -11,7 +11,7 @@ export function formatDateTime(iso: string | null | undefined): string {
 }
 
 export function formatNumber(n: number | null | undefined): string {
-  return n === null || n === undefined ? '—' : n.toLocaleString('en-IN');
+  return n === null || n === undefined ? '—' : n.toLocaleString('en-GB');
 }
 
 export function capitalise(s: string): string {

@@ -1,6 +1,14 @@
 import { api } from './client';
 import type {
+  ApprovalResult,
   AuditEntry,
+  InvigilationEntry,
+  PublishedDocument,
+  RoomPlan,
+  RunDetail,
+  RunParams,
+  RunSummary,
+  TimetableEntry,
   Duty,
   MyExams,
   SeatLookup,
@@ -98,4 +106,22 @@ export const publicApi = {
 export const portalApi = {
   myExams: () => api.get<MyExams>('/api/students/me/exams'),
   myDuties: () => api.get<Duty[]>('/api/faculty/me/duties'),
+};
+
+export const runsApi = {
+  list: (page = 0, size = 20) => api.get<Page<RunSummary>>('/api/schedule-runs', { page, size }),
+  create: (params: RunParams) => api.post<RunSummary>('/api/schedule-runs', params),
+  get: (id: number) => api.get<RunDetail>(`/api/schedule-runs/${id}`),
+  cancel: (id: number) => api.post<RunSummary>(`/api/schedule-runs/${id}/cancel`),
+  remove: (id: number) => api.delete(`/api/schedule-runs/${id}`),
+  timetable: (id: number) => api.get<TimetableEntry[]>(`/api/schedule-runs/${id}/timetable`),
+  rooms: (id: number, slot: string) => api.get<RoomPlan[]>(`/api/schedule-runs/${id}/rooms`, { slot }),
+  invigilation: (id: number) => api.get<InvigilationEntry[]>(`/api/schedule-runs/${id}/invigilation`),
+  compare: (ids: number[]) => api.get<RunDetail[]>('/api/schedule-runs/compare', { ids: ids.join(',') }),
+  approve: (id: number, comment?: string) => api.post<ApprovalResult>(`/api/schedule-runs/${id}/approvals`, { comment }),
+  withdraw: (id: number) => api.delete<ApprovalResult>(`/api/schedule-runs/${id}/approvals/me`),
+  retryPublish: (id: number) => api.post<ApprovalResult>(`/api/schedule-runs/${id}/publish`),
+  disrupt: (id: number, roomCode: string, slot?: string) =>
+    api.post<RunSummary>(`/api/schedule-runs/${id}/disruptions`, { roomCode, slot: slot || undefined }),
+  documents: (id: number, kind?: string) => api.get<PublishedDocument[]>(`/api/schedule-runs/${id}/documents`, { kind }),
 };

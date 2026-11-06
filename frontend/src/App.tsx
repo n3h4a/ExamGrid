@@ -15,6 +15,9 @@ import { MyDutiesPage } from './features/portal/MyDutiesPage';
 import { MyExamsPage } from './features/portal/MyExamsPage';
 import { SeatFinderPage } from './features/portal/SeatFinderPage';
 import { RoomsPage } from './features/rooms/RoomsPage';
+import { ComparePage } from './features/runs/ComparePage';
+import { RunDetailPage } from './features/runs/RunDetailPage';
+import { RunsPage } from './features/runs/RunsPage';
 import { RulesPage } from './features/rules/RulesPage';
 import { SlotsPage } from './features/slots/SlotsPage';
 import { StudentsPage } from './features/students/StudentsPage';
@@ -44,6 +47,9 @@ const router = createBrowserRouter([
           { path: 'faculty', element: <FacultyPage /> },
           { path: 'slots', element: <SlotsPage /> },
           { path: 'rules', element: <RulesPage /> },
+          { path: 'runs', element: <RunsPage /> },
+          { path: 'runs/compare', element: <ComparePage /> },
+          { path: 'runs/:id', element: <RunDetailPage /> },
           { path: 'users', element: <UsersPage /> },
           { path: 'audit', element: <AuditPage /> },
         ],

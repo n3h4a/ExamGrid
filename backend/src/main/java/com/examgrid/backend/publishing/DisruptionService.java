@@ -90,7 +90,9 @@ public class DisruptionService {
         try {
             result = new DisruptionReseater(instance).reseat(plan, room, blankToNull(request.slot()));
         } catch (InfeasibleException e) {
-            throw new ApiException(HttpStatus.UNPROCESSABLE_CONTENT, "cannot_reseat", e.report().summary());
+            throw new ApiException(HttpStatus.UNPROCESSABLE_CONTENT, "cannot_reseat", e.report().issues().stream()
+                    .map(com.examgrid.solver.coloring.InfeasibilityIssue::message)
+                    .collect(java.util.stream.Collectors.joining(" ")));
         }
         if (result.affectedSlots().isEmpty()) {
             throw ApiException.badRequest("room_not_used", "Room " + room + " is not used"

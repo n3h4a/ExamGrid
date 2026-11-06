@@ -1,0 +1,78 @@
+# Serves the SPA and reverse-proxies the API on the same origin (no CORS needed).
+# ${API_UPSTREAM} is substituted at container start (default api:8080).
+
+upstream examgrid_api {
+    server ${API_UPSTREAM};
+    keepalive 16;
+}
+
+# Fingerprinted build assets never change; the SPA shell must always be revalidated.
+map $uri $cache_policy {
+    ~^/assets/  "public, max-age=31536000, immutable";
+    default     "no-cache";
+}
+
+map $http_x_request_id $request_id_out {
+    default $http_x_request_id;
+    ""      $request_id;
+}
+
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    server_tokens off;
+    client_max_body_size 21m;
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript image/svg+xml;
+    gzip_min_length 1024;
+
+    # Note: nginx drops server-level add_header directives in any location that has its own,
+    # so static locations include the SPA headers explicitly and proxied API locations keep
+    # the backend's (stricter) headers instead.
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # Live run progress: Server-Sent Events must not be buffered or cut off.
+    location ~ ^/api/schedule-runs/[0-9]+/events$ {
+        proxy_pass http://examgrid_api;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-Id $request_id_out;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 1h;
+        chunked_transfer_encoding on;
+    }
+
+    location ~ ^/(api|v3/api-docs|swagger-ui)(/|\.html|$) {
+        proxy_pass http://examgrid_api;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Request-Id $request_id_out;
+        proxy_read_timeout 120s;
+    }
+
+    location /assets/ {
+        include /etc/nginx/snippets/spa-headers.conf;
+        try_files $uri =404;
+    }
+
+    # Client-side routes fall back to the SPA shell.
+    location / {
+        include /etc/nginx/snippets/spa-headers.conf;
+        try_files $uri $uri/ /index.html;
+    }
+}

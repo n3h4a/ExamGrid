@@ -30,7 +30,8 @@ src/
 ├── auth/         session provider, useAuth, role guard
 ├── components/   layout shell and UI primitives (Button, Card, Table, Modal, ErrorBanner…)
 ├── features/     one folder per screen: dashboard, imports, courses, students, rooms,
-│                 faculty, slots, rules, users, audit, portal (student / faculty / public)
+│                 faculty, slots, rules, runs (list, live detail, compare), users, audit,
+│                 portal (student / faculty / public seat finder)
 ├── lib/          formatting, seat-label maths, query client, URL-state hook
 └── test/         render helpers and fetch stubs
 ```
@@ -49,8 +50,22 @@ src/
 - **Imports are two-step.** "Check file" runs a dry run and renders the row-level report;
   only a clean report offers "Import N rows", and replace mode is styled as destructive and
   states how many enrolments it removes.
+- **Live runs over SSE without EventSource.** `EventSource` cannot send an Authorization
+  header, so `lib/sse.ts` parses the stream from `fetch`; `useRunEvents` reconnects with
+  backoff (the server replays the latest event), stops at the terminal `status` event and then
+  refreshes the run's queries.
+- **Plan views are read straight from the stored run:** a day × session timetable grid with
+  highlighting, per-slot seating charts tinted by paper, the invigilation roster, run
+  comparison with the best value per metric highlighted, and the approval and "room lost"
+  workflows.
 - **Seat-grid editor** mirrors the solver's checkerboard maths (`lib/seats.ts`) to show live
   how many candidates of one paper a room can hold.
+
+## Container
+
+`Dockerfile` builds the bundle with Node and serves it from `nginx:1.27-alpine`; `nginx/` holds the
+server config (SPA fallback, `/api` proxy with SSE-safe settings, CSP and cache headers). See
+[ADR-0009](../docs/adr/0009-containers-and-single-origin.md).
 
 ## Screens
 

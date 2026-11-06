@@ -13,7 +13,7 @@ its tests green. Status is updated as milestones land.
 | 6 | Scheduling engine: async runs, SSE progress, persisted plans, comparison, cancel | ✅ |
 | 7 | Publishing: two-person approval, PDFs, Redis seat cache, rate limiting, portals, disruptions | ✅ |
 | 8 | Frontend I: React + TS app shell, auth, dashboard, imports, setup screens | ✅ |
-| 9 | Frontend II: runs with live progress, timetable/seating views, approvals, student portal; full-stack Docker | ⏳ |
+| 9 | Frontend II: runs with live progress, timetable/seating views, approvals, student portal; full-stack Docker | ✅ |
 | 10 | CI/CD, deployment, load tests, benchmarks, docs, demo assets | ⏳ |
 
 ---

@@ -39,13 +39,30 @@ SPRING_PROFILES_ACTIVE=dev mvn -pl backend spring-boot:run   # admin / admin1234
 open http://localhost:8080/swagger-ui.html
 ```
 
-## Admin console
-
-![Dashboard](docs/screenshots/dashboard.png)
+## Run everything with Docker
 
 ```bash
-cd frontend && npm ci && npm run dev   # http://localhost:5173 (backend on :8080)
+docker compose -f docker-compose.full.yml up --build
+# open http://localhost:8088 — admin / admin12345 (a second approver: examcell2 / demo12345)
 ```
+
+PostgreSQL, Redis, the API and the Nginx-served web app start together; a synthetic demo
+university is loaded so you can generate, approve and publish a timetable straight away
+([ADR-0009](docs/adr/0009-containers-and-single-origin.md)).
+
+## Screens
+
+| Live solve (SSE) | Review a plan |
+|---|---|
+| ![Live progress](docs/screenshots/run-live-progress.png) | ![Run review](docs/screenshots/run-review.png) |
+| **Seating charts: no two neighbours share a paper** | **Timetable grid** |
+| ![Seating](docs/screenshots/seating-chart.png) | ![Timetable](docs/screenshots/timetable-grid.png) |
+| **"Room lost": only displaced students move** | **Compare runs** |
+| ![Disruption](docs/screenshots/disruption.png) | ![Compare](docs/screenshots/compare.png) |
+| **Student portal** | **Public seat finder** |
+| ![Student](docs/screenshots/student-portal.png) | ![Seat finder](docs/screenshots/seat-finder.png) |
+
+For development, run the API and `cd frontend && npm ci && npm run dev` (http://localhost:5173).
 
 ## How a run works
 
