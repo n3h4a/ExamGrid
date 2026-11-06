@@ -11,6 +11,7 @@ course; ExamGrid works out **when** every exam happens, **where** every student 
 | Path | What it is |
 |---|---|
 | [`solver/`](solver) | Framework-free Java 21 scheduling engine and CLI ([details](solver/README.md)) |
+| [`frontend/`](frontend) | React 19 + TypeScript admin console, portals and seat finder ([details](frontend/README.md)) |
 | [`backend/`](backend) | Spring Boot 4 REST API: PostgreSQL, JWT, audit log ([details](backend/README.md)) |
 | [`benchmarks/`](benchmarks) | JMH benchmarks and the scaling report |
 | [`samples/`](samples) | Small fictional dataset for trying imports |
@@ -36,6 +37,14 @@ docker compose up -d
 mvn -pl solver -am install -DskipTests
 SPRING_PROFILES_ACTIVE=dev mvn -pl backend spring-boot:run   # admin / admin12345, demo data seeded
 open http://localhost:8080/swagger-ui.html
+```
+
+## Admin console
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+```bash
+cd frontend && npm ci && npm run dev   # http://localhost:5173 (backend on :8080)
 ```
 
 ## How a run works
