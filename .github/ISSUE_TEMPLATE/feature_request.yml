@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a change to how ExamGrid plans, publishes or serves exams.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: Who is affected and what is hard today? Describe the situation, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Rules and constraints involved
+      description: For scheduling changes, which hard or soft constraints change, and how should an impossible case be reported?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

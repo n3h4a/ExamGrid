@@ -1,0 +1,57 @@
+name: Bug report
+description: Something in ExamGrid behaves differently from what the docs describe.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Security vulnerabilities must **not** be reported here; see SECURITY.md.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Solver (timetable, rooms, seating, invigilation)
+        - Imports
+        - Runs and live progress
+        - Approval, publishing and documents
+        - Portals and seat finder
+        - Web app (UI)
+        - Deployment and configuration
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Requests, clicks or a small CSV are ideal. Remove real student data.
+      placeholder: |
+        1. Import samples/enrolments.csv
+        2. Start a run with …
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: request-id
+    attributes:
+      label: Request id
+      description: The "Reference" shown in the error banner, or the X-Request-Id response header.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Commit SHA or image tag (e.g. ghcr.io/n3h4a/examgrid-api:sha-abc1234).
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      render: text
