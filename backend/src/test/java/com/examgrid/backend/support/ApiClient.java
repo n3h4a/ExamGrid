@@ -1,9 +1,10 @@
 package com.examgrid.backend.support;
 
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -53,6 +54,24 @@ public final class ApiClient {
                 .contentType(MediaType.APPLICATION_JSON).content(json(body)));
     }
 
+    public ResultActions put(String path, String token, Object body) throws Exception {
+        return mvc.perform(auth(MockMvcRequestBuilders.put(path), token)
+                .contentType(MediaType.APPLICATION_JSON).content(json(body)));
+    }
+
+    public ResultActions delete(String path, String token) throws Exception {
+        return mvc.perform(auth(MockMvcRequestBuilders.delete(path), token));
+    }
+
+    public ResultActions upload(String path, String token, String filename, byte[] content) throws Exception {
+        return mvc.perform(auth(MockMvcRequestBuilders.multipart(path)
+                .file(new MockMultipartFile("file", filename, "text/csv", content)), token));
+    }
+
+    public ResultActions upload(String path, String token, String filename, String csv) throws Exception {
+        return upload(path, token, filename, csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
     public JsonNode read(ResultActions result) throws Exception {
         return mapper.readTree(result.andReturn().getResponse().getContentAsString());
     }
@@ -61,7 +80,7 @@ public final class ApiClient {
         return body instanceof String s ? s : mapper.writeValueAsString(body);
     }
 
-    private static MockHttpServletRequestBuilder auth(MockHttpServletRequestBuilder builder, String token) {
+    private static <B extends AbstractMockHttpServletRequestBuilder<B>> B auth(B builder, String token) {
         return token == null ? builder : builder.header("Authorization", "Bearer " + token);
     }
 }

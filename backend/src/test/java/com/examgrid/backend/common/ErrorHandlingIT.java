@@ -29,7 +29,7 @@ class ErrorHandlingIT {
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content("{not json"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.code").value("request_error"))
+                .andExpect(jsonPath("$.code").value("malformed_request"))
                 .andExpect(jsonPath("$.trace").doesNotExist());
     }
 

@@ -42,6 +42,10 @@ examgrid:
   bootstrap-admin:
     username: ${EXAMGRID_BOOTSTRAP_ADMIN_USERNAME:}
     password: ${EXAMGRID_BOOTSTRAP_ADMIN_PASSWORD:}
+  storage:
+    root: ${EXAMGRID_STORAGE_ROOT:./data/storage}
+  imports:
+    roll-pattern: ${EXAMGRID_ROLL_PATTERN:}
 
 management:
   endpoints:

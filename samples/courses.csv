@@ -1,0 +1,25 @@
+code,name,department,hard,sessions
+CS201,Computer Science Mathematics 2,CS,yes,
+CS202,Computer Science Core Theory 2,CS,yes,
+CS203,Computer Science Systems 2,CS,no,
+CS204,Computer Science Laboratory 2,CS,no,AFTERNOON
+CS301,Computer Science Mathematics 3,CS,yes,
+CS302,Computer Science Core Theory 3,CS,yes,
+CS303,Computer Science Systems 3,CS,no,
+CS304,Computer Science Laboratory 3,CS,no,AFTERNOON
+EC201,Electronics Mathematics 2,EC,yes,
+EC202,Electronics Core Theory 2,EC,yes,
+EC203,Electronics Systems 2,EC,no,
+EC204,Electronics Laboratory 2,EC,no,AFTERNOON
+EC301,Electronics Mathematics 3,EC,yes,
+EC302,Electronics Core Theory 3,EC,yes,
+EC303,Electronics Systems 3,EC,no,
+EC304,Electronics Laboratory 3,EC,no,AFTERNOON
+ME201,Mechanical Mathematics 2,ME,yes,
+ME202,Mechanical Core Theory 2,ME,yes,
+ME203,Mechanical Systems 2,ME,no,
+ME204,Mechanical Laboratory 2,ME,no,AFTERNOON
+ME301,Mechanical Mathematics 3,ME,yes,
+ME302,Mechanical Core Theory 3,ME,yes,
+ME303,Mechanical Systems 3,ME,no,
+ME304,Mechanical Laboratory 3,ME,no,AFTERNOON

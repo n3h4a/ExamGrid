@@ -1,0 +1,5 @@
+code,building,rows,columns,blocked,priority
+R101,Main Block,6,8,,1
+R102,Main Block,6,8,F8,2
+R201,Main Block,5,6,,3
+R202,Annexe,8,10,A1;A10,4

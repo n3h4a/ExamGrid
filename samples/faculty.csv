@@ -1,0 +1,13 @@
+code,name,email,department,teaches,unavailable
+F001,Dr Ananya Iyer,f001@example.edu,EC,EC202;EC302,
+F002,Dr Arjun Patel,f002@example.edu,ME,ME203;ME303,
+F003,Dr Meera Reddy,f003@example.edu,CS,CS204;CS304,2026-12-09
+F004,Dr Vihaan Khan,f004@example.edu,EC,EC201;EC301,
+F005,Dr Diya Das,f005@example.edu,ME,ME202;ME302,
+F006,Dr Ishaan Nair,f006@example.edu,CS,CS203;CS303,
+F007,Dr Kavya Gupta,f007@example.edu,EC,EC204;EC304,
+F008,Dr Rohan Sharma,f008@example.edu,ME,ME201;ME301,
+F009,Dr Aditi Iyer,f009@example.edu,CS,CS202;CS302,
+F010,Dr Kabir Patel,f010@example.edu,EC,EC203;EC303,
+F011,Dr Saanvi Reddy,f011@example.edu,ME,ME204;ME304,
+F012,Dr Aarav Khan,f012@example.edu,CS,CS201;CS301,

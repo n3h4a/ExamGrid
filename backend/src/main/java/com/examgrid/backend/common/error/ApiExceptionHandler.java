@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.Nullable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -19,8 +20,11 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import tools.jackson.databind.DatabindException;
+
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Turns every error into an RFC 9457 {@code application/problem+json} response with a stable
@@ -97,6 +101,22 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 "The request has invalid parameters.");
         problem.setProperty("errors", errors);
         return ResponseEntity.badRequest().headers(headers).body(problem);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+                                                                  HttpHeaders headers, HttpStatusCode status,
+                                                                  WebRequest request) {
+        String detail = "The request body is not valid JSON for this endpoint.";
+        Throwable cause = ex.getMostSpecificCause();
+        if (cause instanceof DatabindException db && !db.getPath().isEmpty()) {
+            String field = db.getPath().stream()
+                    .map(ref -> ref.getPropertyName() != null ? ref.getPropertyName() : "[" + ref.getIndex() + "]")
+                    .collect(Collectors.joining("."));
+            detail = "Field '" + field + "' is missing or has the wrong type.";
+        }
+        return ResponseEntity.badRequest().headers(headers)
+                .body(Problems.of(HttpStatus.BAD_REQUEST, "malformed_request", detail));
     }
 
     @Override

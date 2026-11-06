@@ -5,3 +5,5 @@ examgrid:
   bootstrap-admin:
     username: admin
     password: admin-test-password
+  storage:
+    root: target/test-storage
