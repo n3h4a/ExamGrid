@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-FROM nginx:1.27-alpine
+FROM nginx:1.29-alpine
 # The official image renders /etc/nginx/templates/*.template with envsubst at start-up.
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY nginx/spa-headers.conf /etc/nginx/snippets/spa-headers.conf
