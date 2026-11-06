@@ -5,11 +5,14 @@ level deeper, and each is written against the code as it stands.
 
 | Read this | To learn |
 |---|---|
-| [Architecture](architecture.md) | Containers, API packages, solver pipeline, run lifecycle, publishing sequence, data model |
+| [Architecture](architecture.md) | Containers, backend layers, request lifecycle, authentication flow, frontend, solver pipeline, run lifecycle, publishing, deployment |
+| [Data model](database.md) | Tables and constraints, ER diagram, indexing strategy, concurrency control, Redis keys, file storage |
+| [Algorithms](algorithms.md) | How the engine plans a season: worked example, each algorithm's rationale, complexity and alternatives |
+| [Technology choices](technology.md) | Why each technology was chosen, what it costs, and what was considered instead |
 | [Decision records](adr) | Why each major design choice was made, with the alternatives considered |
-| [API reference](api/README.md) | Authentication, conventions, every endpoint; the full [OpenAPI 3.1 spec](api/openapi.json) |
+| [API reference](api/README.md) | Conventions, a walkthrough of one season with real requests and responses, every endpoint, every error code; the full [OpenAPI 3.1 spec](api/openapi.json) |
 | [Imports](imports.md) | Accepted file formats, columns and validation rules |
-| [Security](security.md) | Threats and the controls that address them |
+| [Security](security.md) | Trust boundaries, authentication, authorisation, uploads, headers, OWASP Top 10 mapping, known limitations |
 | [Testing](testing.md) | Test suites, property tests, coverage, how to run them |
 | [Benchmarks](benchmarks/README.md) | Solver scaling and per-stage JMH measurements |
 | [Load test](benchmarks/load-test.md) | Result-day HTTP performance, including a Redis outage |

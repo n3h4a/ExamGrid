@@ -180,8 +180,9 @@ flowchart LR
   them over Server-Sent Events, and a restart recovers queued work.
 
 Read more:
-- [architecture overview](docs/architecture.md): containers, pipeline, run lifecycle,
-  publishing sequence and data model;
+- [architecture overview](docs/architecture.md): containers, backend layers, request
+  lifecycle, authentication flow, frontend, pipeline, run lifecycle, publishing and deployment;
+- [data model](docs/database.md): tables, constraints, indexing strategy and Redis keys;
 - [nine architecture decision records](docs/adr).
 
 ## How the engine works
@@ -206,12 +207,14 @@ flowchart LR
 | Seats | Colour-class packing + **forward-checking CSP** | budgeted backtracking (≤ 100k / 200k steps) | Packing papers into checkerboard classes is valid by construction; the CSP handles papers that must be split |
 | Invigilation | **Min-heap** by load | O(D log F) for D duties, F faculty | Simple, fair and explainable |
 
-Every plan passes an independent `SolutionValidator` before it is stored. The trade-offs
-and rejected alternatives are recorded in ADRs [0002](docs/adr/0002-colouring-strategy.md),
-[0003](docs/adr/0003-penalty-model-and-optimisers.md) and
-[0004](docs/adr/0004-rooms-seating-invigilation.md).
+Every plan passes an independent `SolutionValidator` before it is stored.
+**[How ExamGrid plans an exam season](docs/algorithms.md)** walks through a worked example and
+explains each algorithm's rationale, complexity and rejected alternatives.
 
 ## Engineering decisions
+
+The key trade-offs are summarised below; [technology choices](docs/technology.md) covers each
+one in depth.
 
 | Decision | Why | Trade-off accepted |
 |---|---|---|
