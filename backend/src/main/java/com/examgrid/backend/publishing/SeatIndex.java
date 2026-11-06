@@ -1,5 +1,6 @@
 package com.examgrid.backend.publishing;
 
+import com.examgrid.backend.common.redis.RedisCircuit;
 import com.examgrid.backend.publishing.PlanSnapshot.SeatInfo;
 import com.examgrid.backend.publishing.PlanSnapshot.StudentTicket;
 import org.slf4j.Logger;
@@ -45,12 +46,15 @@ public class SeatIndex {
     private final JdbcTemplate jdbc;
     private final PlanReader plans;
     private final ObjectMapper mapper;
+    private final RedisCircuit circuit;
 
-    public SeatIndex(StringRedisTemplate redis, JdbcTemplate jdbc, PlanReader plans, ObjectMapper mapper) {
+    public SeatIndex(StringRedisTemplate redis, JdbcTemplate jdbc, PlanReader plans, ObjectMapper mapper,
+                     RedisCircuit circuit) {
         this.redis = redis;
         this.jdbc = jdbc;
         this.plans = plans;
         this.mapper = mapper;
+        this.circuit = circuit;
     }
 
     static String key(long runId, String roll) {
@@ -96,22 +100,27 @@ public class SeatIndex {
 
     /** Which run is live, from Redis if possible, else from Postgres. */
     public Optional<Long> publishedRun() {
-        try {
-            String id = redis.opsForValue().get(POINTER);
-            if (id != null) {
-                return Optional.of(Long.parseLong(id));
+        if (circuit.allows()) {
+            try {
+                String id = redis.opsForValue().get(POINTER);
+                circuit.recordSuccess();
+                if (id != null) {
+                    return Optional.of(Long.parseLong(id));
+                }
+            } catch (DataAccessException e) {
+                circuit.recordFailure(e);
             }
-        } catch (DataAccessException e) {
-            log.warn("Redis unavailable for published-run pointer: {}", e.getMessage());
         }
         List<Long> ids = jdbc.queryForList("select id from schedule_run where status = 'PUBLISHED'", Long.class);
         if (ids.isEmpty()) {
             return Optional.empty();
         }
-        try {
-            activate(ids.getFirst());
-        } catch (DataAccessException e) {
-            log.debug("Could not restore pointer: {}", e.getMessage());
+        if (circuit.allows()) {
+            try {
+                activate(ids.getFirst());
+            } catch (DataAccessException e) {
+                circuit.recordFailure(e);
+            }
         }
         return Optional.of(ids.getFirst());
     }
@@ -119,13 +128,17 @@ public class SeatIndex {
     /** A student's seats in the live run: Redis hit, or Postgres fallback that re-populates Redis. */
     public Optional<List<SeatInfo>> lookup(long runId, String roll) {
         String key = key(runId, roll);
+        if (!circuit.allows()) {
+            return plans.seatsOf(runId, roll.toUpperCase(Locale.ROOT));
+        }
         try {
             String cached = redis.opsForValue().get(key);
+            circuit.recordSuccess();
             if (cached != null) {
                 return Optional.of(mapper.readValue(cached, SEATS));
             }
         } catch (DataAccessException e) {
-            log.warn("Redis unavailable for seat lookup, using Postgres: {}", e.getMessage());
+            circuit.recordFailure(e);
             return plans.seatsOf(runId, roll.toUpperCase(Locale.ROOT));
         }
         Optional<List<SeatInfo>> fromDb = plans.seatsOf(runId, roll.toUpperCase(Locale.ROOT));
@@ -133,7 +146,7 @@ public class SeatIndex {
             try {
                 redis.opsForValue().set(key, mapper.writeValueAsString(seats));
             } catch (DataAccessException e) {
-                log.debug("Could not re-populate {}: {}", key, e.getMessage());
+                circuit.recordFailure(e);
             }
         });
         return fromDb;

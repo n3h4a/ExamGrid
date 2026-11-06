@@ -1,7 +1,6 @@
 package com.examgrid.backend.ratelimit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.examgrid.backend.common.redis.RedisCircuit;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -19,7 +18,6 @@ import java.util.List;
 @Component
 public class RedisRateLimiter {
 
-    private static final Logger log = LoggerFactory.getLogger(RedisRateLimiter.class);
     private static final DefaultRedisScript<Long> INCREMENT = new DefaultRedisScript<>(
             "local n = redis.call('INCR', KEYS[1]) "
                     + "if n == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end "
@@ -27,10 +25,12 @@ public class RedisRateLimiter {
 
     private final StringRedisTemplate redis;
     private final Clock clock;
+    private final RedisCircuit circuit;
 
-    public RedisRateLimiter(StringRedisTemplate redis, Clock clock) {
+    public RedisRateLimiter(StringRedisTemplate redis, Clock clock, RedisCircuit circuit) {
         this.redis = redis;
         this.clock = clock;
+        this.circuit = circuit;
     }
 
     /** @param retryAfterSeconds seconds until the window resets (only meaningful when refused) */
@@ -42,12 +42,16 @@ public class RedisRateLimiter {
         long window = now / windowSeconds;
         long retryAfter = (window + 1) * windowSeconds - now;
         String key = "examgrid:rl:" + bucket + ":" + client + ":" + window;
+        if (!circuit.allows()) {
+            return new Decision(true, limit, 0);
+        }
         try {
             Long count = redis.execute(INCREMENT, List.of(key), String.valueOf(windowSeconds + 1));
+            circuit.recordSuccess();
             long n = count == null ? 0 : count;
             return new Decision(n <= limit, Math.max(0, limit - n), retryAfter);
         } catch (DataAccessException e) {
-            log.warn("Rate limiter unavailable, allowing request: {}", e.getMessage());
+            circuit.recordFailure(e);
             return new Decision(true, limit, 0);
         }
     }

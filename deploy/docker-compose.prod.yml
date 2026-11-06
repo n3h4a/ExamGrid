@@ -1,0 +1,85 @@
+# Production on a single VM: Caddy (automatic HTTPS) → web (Nginx + SPA) → api → PostgreSQL / Redis.
+#   cp .env.example .env    # fill in every value
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+# Images come from GitHub Container Registry, built by CI from main.
+name: examgrid
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN, e.g. exams.example.edu}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/${GHCR_OWNER:-n3h4a}/examgrid-web:${EXAMGRID_VERSION:-latest}
+    environment:
+      API_UPSTREAM: api:8080
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/${GHCR_OWNER:-n3h4a}/examgrid-api:${EXAMGRID_VERSION:-latest}
+    environment:
+      EXAMGRID_DB_URL: jdbc:postgresql://postgres:5432/examgrid
+      EXAMGRID_DB_USERNAME: examgrid
+      EXAMGRID_DB_PASSWORD: ${EXAMGRID_DB_PASSWORD:?set EXAMGRID_DB_PASSWORD}
+      EXAMGRID_REDIS_URL: redis://redis:6379
+      EXAMGRID_JWT_SECRET: ${EXAMGRID_JWT_SECRET:?set EXAMGRID_JWT_SECRET (32+ characters)}
+      EXAMGRID_BOOTSTRAP_ADMIN_USERNAME: ${EXAMGRID_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      EXAMGRID_BOOTSTRAP_ADMIN_PASSWORD: ${EXAMGRID_BOOTSTRAP_ADMIN_PASSWORD:?set EXAMGRID_BOOTSTRAP_ADMIN_PASSWORD}
+      EXAMGRID_INSTITUTION_NAME: ${EXAMGRID_INSTITUTION_NAME:-ExamGrid}
+      EXAMGRID_DEMO_ENABLED: ${EXAMGRID_DEMO_ENABLED:-false}
+      EXAMGRID_CORS_ORIGINS: https://${DOMAIN}
+      JAVA_OPTS: -XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true
+    volumes:
+      - api-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: examgrid
+      POSTGRES_USER: examgrid
+      POSTGRES_PASSWORD: ${EXAMGRID_DB_PASSWORD:?set EXAMGRID_DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U examgrid -d examgrid"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:
+  postgres-data:
+  api-data:

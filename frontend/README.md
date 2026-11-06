@@ -16,6 +16,7 @@ React 19 + TypeScript single-page app for the exam cell, faculty and students.
 npm ci
 npm run dev        # http://localhost:5173, proxies /api to the backend on :8080
 npm test           # unit and component tests
+npm run test:coverage   # same, with a v8 coverage report in coverage/
 npm run lint && npm run typecheck && npm run build
 ```
 

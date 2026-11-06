@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400" role="img" aria-labelledby="t d" font-family="-apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+<title id="t">ExamGrid end-to-end solve time by number of enrolments</title>
+<desc id="d">48 courses, 3,295 enrolments: 25 ms; 96 courses, 6,581 enrolments: 38 ms; 192 courses, 13,160 enrolments: 59 ms; 480 courses, 65,390 enrolments: 181 ms. Median of 5 runs on a 4 vCPU VM.</desc>
+<style>
+svg{--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--grid:#e6e5e1;--s1:#2a78d6}
+@media (prefers-color-scheme:dark){svg{--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#8f8e88;--grid:#33332f;--s1:#3987e5}}
+.bg{fill:var(--surface)} .title{fill:var(--ink);font-size:16px;font-weight:600} .sub{fill:var(--ink2);font-size:12px}
+.tick{fill:var(--muted);font-size:11px} .axis{fill:var(--ink2);font-size:12px} .grid{stroke:var(--grid);stroke-width:1}
+.line{fill:none;stroke:var(--s1);stroke-width:2;stroke-linejoin:round} .dot{fill:var(--s1);stroke:var(--surface);stroke-width:2}
+.lab{fill:var(--ink);font-size:12px;font-weight:600} .lab2{fill:var(--ink2);font-size:11px}
+</style>
+<rect class="bg" width="720" height="400" rx="8"/>
+<text class="title" x="64" y="30">Full plan in under 0.2 s, even at 65,000 enrolments</text>
+<text class="sub" x="64" y="50">Median end-to-end solve time (timetable, rooms, seats, invigilators); 300,000 optimiser moves; 4 vCPU VM</text>
+<line class="grid" x1="64" x2="688" y1="336.0" y2="336.0"/>
+<text class="tick" x="56" y="340.0" text-anchor="end">0</text>
+<line class="grid" x1="64" x2="688" y1="270.0" y2="270.0"/>
+<text class="tick" x="56" y="274.0" text-anchor="end">50</text>
+<line class="grid" x1="64" x2="688" y1="204.0" y2="204.0"/>
+<text class="tick" x="56" y="208.0" text-anchor="end">100</text>
+<line class="grid" x1="64" x2="688" y1="138.0" y2="138.0"/>
+<text class="tick" x="56" y="142.0" text-anchor="end">150</text>
+<line class="grid" x1="64" x2="688" y1="72.0" y2="72.0"/>
+<text class="tick" x="56" y="76.0" text-anchor="end">200</text>
+<text class="tick" x="64.0" y="354" text-anchor="middle">0k</text>
+<text class="tick" x="153.1" y="354" text-anchor="middle">10k</text>
+<text class="tick" x="242.3" y="354" text-anchor="middle">20k</text>
+<text class="tick" x="331.4" y="354" text-anchor="middle">30k</text>
+<text class="tick" x="420.6" y="354" text-anchor="middle">40k</text>
+<text class="tick" x="509.7" y="354" text-anchor="middle">50k</text>
+<text class="tick" x="598.9" y="354" text-anchor="middle">60k</text>
+<text class="tick" x="688.0" y="354" text-anchor="middle">70k</text>
+<text class="axis" x="376.0" y="386" text-anchor="middle">Enrolments (student–paper pairs)</text>
+<text class="axis" transform="translate(18 204.0) rotate(-90)" text-anchor="middle">Median solve time (ms)</text>
+<polyline class="line" points="93.4,303.0 122.7,285.8 181.3,258.1 646.9,97.1"/>
+<circle class="dot" cx="93.4" cy="303.0" r="5"><title>48 courses · 650 students · 3,295 enrolments: 25 ms</title></circle>
+<circle class="dot" cx="122.7" cy="285.8" r="5"><title>96 courses · 1,300 students · 6,581 enrolments: 38 ms</title></circle>
+<circle class="dot" cx="181.3" cy="258.1" r="5"><title>192 courses · 2,600 students · 13,160 enrolments: 59 ms</title></circle>
+<circle class="dot" cx="646.9" cy="97.1" r="5"><title>480 courses · 6,500 students · 65,390 enrolments: 181 ms</title></circle>
+<text x="103.4" y="319.0"><tspan class="lab">25 ms</tspan><tspan class="lab2"> · 48 courses</tspan></text>
+<text x="132.7" y="301.8"><tspan class="lab">38 ms</tspan><tspan class="lab2"> · 96 courses</tspan></text>
+<text x="191.3" y="274.1"><tspan class="lab">59 ms</tspan><tspan class="lab2"> · 192 courses</tspan></text>
+<text x="636.9" y="85.1" text-anchor="end"><tspan class="lab">181 ms</tspan><tspan class="lab2"> · 480 courses</tspan></text>
+</svg>

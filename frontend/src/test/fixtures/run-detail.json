@@ -1,0 +1,212 @@
+{
+ "run": {
+  "id": 1,
+  "label": "Semester plan",
+  "status": "PUBLISHED",
+  "progressPct": 100,
+  "score": 0,
+  "createdBy": "admin",
+  "createdAt": "2026-11-06T19:09:05.899964Z",
+  "startedAt": "2026-11-06T19:09:05.910128Z",
+  "finishedAt": "2026-11-06T19:09:06.168893Z",
+  "durationMs": 258,
+  "parentRunId": null
+ },
+ "params": {
+  "seed": 42,
+  "label": "Load-test plan",
+  "weights": {
+   "hardGap": 5,
+   "sameDay": 10,
+   "backToBack": 3,
+   "hardMinGapDays": 2
+  },
+  "optimizer": "ANNEALING",
+  "maxIterations": 1000000,
+  "timeLimitSeconds": 60,
+  "diagonalAdjacency": false,
+  "minInvigilatorsPerRoom": 1,
+  "studentsPerInvigilator": 30
+ },
+ "metrics": {
+  "slots": [
+   {
+    "slot": "2026-11-30-MORNING",
+    "exams": 9,
+    "rooms": 9,
+    "candidates": 566
+   },
+   {
+    "slot": "2026-11-30-AFTERNOON",
+    "exams": 4,
+    "rooms": 5,
+    "candidates": 303
+   },
+   {
+    "slot": "2026-12-01-MORNING",
+    "exams": 8,
+    "rooms": 8,
+    "candidates": 489
+   },
+   {
+    "slot": "2026-12-01-AFTERNOON",
+    "exams": 5,
+    "rooms": 5,
+    "candidates": 305
+   },
+   {
+    "slot": "2026-12-02-MORNING",
+    "exams": 9,
+    "rooms": 9,
+    "candidates": 603
+   },
+   {
+    "slot": "2026-12-02-AFTERNOON",
+    "exams": 2,
+    "rooms": 3,
+    "candidates": 151
+   },
+   {
+    "slot": "2026-12-03-MORNING",
+    "exams": 9,
+    "rooms": 8,
+    "candidates": 471
+   },
+   {
+    "slot": "2026-12-03-AFTERNOON",
+    "exams": 4,
+    "rooms": 4,
+    "candidates": 239
+   },
+   {
+    "slot": "2026-12-04-MORNING",
+    "exams": 4,
+    "rooms": 5,
+    "candidates": 304
+   },
+   {
+    "slot": "2026-12-04-AFTERNOON",
+    "exams": 7,
+    "rooms": 7,
+    "candidates": 409
+   },
+   {
+    "slot": "2026-12-05-MORNING",
+    "exams": 5,
+    "rooms": 4,
+    "candidates": 264
+   },
+   {
+    "slot": "2026-12-05-AFTERNOON",
+    "exams": 7,
+    "rooms": 8,
+    "candidates": 502
+   },
+   {
+    "slot": "2026-12-07-MORNING",
+    "exams": 10,
+    "rooms": 9,
+    "candidates": 589
+   },
+   {
+    "slot": "2026-12-07-AFTERNOON",
+    "exams": 1,
+    "rooms": 2,
+    "candidates": 40
+   },
+   {
+    "slot": "2026-12-08-MORNING",
+    "exams": 9,
+    "rooms": 8,
+    "candidates": 539
+   },
+   {
+    "slot": "2026-12-08-AFTERNOON",
+    "exams": 6,
+    "rooms": 6,
+    "candidates": 336
+   },
+   {
+    "slot": "2026-12-09-MORNING",
+    "exams": 3,
+    "rooms": 4,
+    "candidates": 229
+   },
+   {
+    "slot": "2026-12-09-AFTERNOON",
+    "exams": 6,
+    "rooms": 7,
+    "candidates": 421
+   },
+   {
+    "slot": "2026-12-10-MORNING",
+    "exams": 2,
+    "rooms": 3,
+    "candidates": 108
+   },
+   {
+    "slot": "2026-12-10-AFTERNOON",
+    "exams": 10,
+    "rooms": 12,
+    "candidates": 722
+   }
+  ],
+  "solver": {
+   "repaired": false,
+   "timetable": {
+    "score": 0,
+    "slotsUsed": 20,
+    "clashPairs": 0,
+    "hardGapPairs": 0,
+    "sameDayPairs": 0,
+    "backToBackPairs": 0,
+    "studentsWithSameDay": 0,
+    "maxExamsPerStudentDay": 1,
+    "studentsWithBackToBack": 0
+   },
+   "initialScore": 30414,
+   "dsaturColours": 11,
+   "elapsedMillis": 169,
+   "optimiserStop": "OPTIMAL",
+   "roomSlotsUsed": 126,
+   "unfilledDuties": 0,
+   "seatUtilisation": 0.903248839700107,
+   "maxFacultyDuties": 5,
+   "minFacultyDuties": 4,
+   "invigilationDuties": 286,
+   "optimiserIterations": 760435
+  },
+  "warnings": []
+ },
+ "infeasibility": null,
+ "inputSummary": {
+  "locks": 0,
+  "rooms": 14,
+  "seats": 961,
+  "slots": 20,
+  "courses": 120,
+  "faculty": 61,
+  "students": 1500,
+  "enrolments": 7590,
+  "fingerprint": "c0a97cfa223d0e28130a0acdc23ef056572b23659031b231ce66528e1ea6d079",
+  "sameSlotGroups": 0,
+  "examinedCourses": 120
+ },
+ "disruption": null,
+ "errorMessage": null,
+ "dataChanged": false,
+ "approvals": [
+  {
+   "username": "admin",
+   "displayName": "Exam cell administrator",
+   "approvedAt": "2026-11-06T19:09:07.073001Z",
+   "comment": null
+  },
+  {
+   "username": "examcell2",
+   "displayName": "Second exam cell member",
+   "approvedAt": "2026-11-06T19:09:07.124004Z",
+   "comment": null
+  }
+ ]
+}

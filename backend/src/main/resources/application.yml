@@ -2,7 +2,8 @@ spring:
   application:
     name: examgrid
   datasource:
-    url: ${EXAMGRID_DB_URL:jdbc:postgresql://localhost:5432/examgrid}
+    # Either a full JDBC URL, or host/port/name parts (how PaaS providers expose a database).
+    url: ${EXAMGRID_DB_URL:jdbc:postgresql://${EXAMGRID_DB_HOST:localhost}:${EXAMGRID_DB_PORT:5432}/${EXAMGRID_DB_NAME:examgrid}}
     username: ${EXAMGRID_DB_USERNAME:examgrid}
     password: ${EXAMGRID_DB_PASSWORD:examgrid}
     hikari:
@@ -21,7 +22,9 @@ spring:
   data:
     redis:
       url: ${EXAMGRID_REDIS_URL:redis://localhost:6379}
-      timeout: 2s
+      # Redis is a cache: fail fast and let RedisCircuit route to the Postgres fallback.
+      timeout: 500ms
+      connect-timeout: 500ms
   servlet:
     multipart:
       max-file-size: 20MB

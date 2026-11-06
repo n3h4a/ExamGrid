@@ -6,7 +6,10 @@ produces departments × 4 year cohorts; core courses are shared by a cohort, eac
 takes one elective, and about 8 % carry a backlog paper. Every instance has 12 exam days × 2
 sessions = 24 slots and about 13 students per course. The optimiser budget is 300,000 moves.
 
-Raw data: [`scaling.csv`](scaling.csv), [`jmh.csv`](jmh.csv).
+Raw data: [`scaling.csv`](scaling.csv), [`jmh.csv`](jmh.csv). The result-day HTTP load test
+(k6, 1,000 concurrent students) is in [`load-test.md`](load-test.md).
+
+![Median solve time rises roughly linearly from 25 ms at 3,295 enrolments to 181 ms at 65,390 enrolments](scaling.svg)
 
 ## End-to-end scaling (timetable + rooms + seats + invigilators)
 

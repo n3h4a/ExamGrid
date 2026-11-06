@@ -61,12 +61,12 @@ com.examgrid.backend
 ├── scheduling  runs as jobs: snapshot loader, worker pool, SSE progress, plan storage and views
 ├── publishing  two-person approval, publication job, PDFs, Redis seat index, disruptions
 ├── portal      student / faculty "me" endpoints and the public seat finder
-├── ratelimit   Redis fixed-window limiter for public endpoints and login
+├── ratelimit   Redis fixed-window limiter for public endpoints and login (fails open)
 ├── search      trigram search across students, courses, faculty, rooms
 ├── demo        synthetic demo university seeder
 ├── audit       append-only audit log + search API
 ├── security    JWT issue/verify, filter chains, CurrentUser, roles
-└── common      problem-detail errors, request ids, paging, OpenAPI, clock
+└── common      problem-detail errors, request ids, paging, OpenAPI, clock, Redis circuit breaker
 ```
 
 ## API overview
@@ -114,6 +114,7 @@ See [ADR-0007](../docs/adr/0007-async-runs-and-sse.md) for the job model.
 
 ```bash
 mvn -pl backend verify    # unit tests (surefire) + *IT integration tests (failsafe, Testcontainers)
+                          # coverage: target/site/jacoco-merged/index.html (unit + integration)
 ```
 
 Integration tests start shared `postgres:16-alpine` and `redis:7-alpine` containers and run the
