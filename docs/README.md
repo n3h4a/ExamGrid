@@ -1,6 +1,8 @@
 # ExamGrid documentation
 
-Start with the [project README](../README.md) for the overview. The documents below go one
+Start with the [project README](../README.md) for the overview. For the complete engineering
+handbook (status, every package and file, decisions, known issues and a handover for new
+contributors), read the [project bible](../PROJECT_OVERVIEW.md). The documents below go one
 level deeper, and each is written against the code as it stands.
 
 | Read this | To learn |

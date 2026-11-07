@@ -19,6 +19,7 @@
   <a href="docs/architecture.md"><b>Architecture</b></a> ·
   <a href="docs/api/README.md"><b>API</b></a> ·
   <a href="docs/README.md"><b>Documentation</b></a> ·
+  <a href="PROJECT_OVERVIEW.md"><b>Project bible</b></a> ·
   <a href="CHANGELOG.md"><b>Changelog</b></a>
 </p>
 
@@ -334,6 +335,7 @@ never in a public issue.
 | [`samples/`](samples) | A small fictional dataset for trying imports |
 | [`tools/`](tools) | Scripts that regenerate the banner and every screenshot |
 | [`docs/`](docs/README.md) | Architecture, data model, algorithms, technology choices, ADRs, API, security, testing, benchmarks, deployment |
+| [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) | The project bible: the complete engineering handbook and handover document, the single source of truth |
 | [`.github/`](.github) | CI workflow, Dependabot, issue and pull-request templates, code owners, security policy |
 
 ## Author

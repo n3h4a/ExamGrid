@@ -14,7 +14,7 @@ make web          # web app on :5173 with hot reload             (terminal 2)
 ```
 
 Sign in at <http://localhost:5173> as `admin` / `admin12345`. Run `make` to see every command,
-and see [the docs index](docs/README.md) for how the system fits together.
+and see [the project bible](PROJECT_OVERVIEW.md) for how the whole system fits together.
 
 ## Before you open a pull request
 
